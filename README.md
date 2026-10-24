@@ -21,8 +21,8 @@
 Copy `.env.example` to `.env` and configure your Supabase project credentials:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL="https://your-project-ref.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-public-anon-key"
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co"
+VITE_SUPABASE_ANON_KEY="your-public-anon-key"
 ```
 
 ## Database Migration (Supabase PostgreSQL + RLS)
