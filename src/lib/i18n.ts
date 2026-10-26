@@ -85,16 +85,16 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       quizTitle: 'Cyber Readiness Quiz',
       quizSubtitle:
         'Test your ability to handle real-world Ghanaian cyber scenarios and share your readiness score card with friends on WhatsApp.',
-      examplesTitle: 'Real Anonymized Scam Examples',
+      examplesTitle: 'Illustrative Scam Examples',
       examplesSubtitle:
-        'Deconstructed real-world scam templates with personal numbers redacted and every manipulation tactic annotated.',
+        'Illustrative scam message templates with personal numbers redacted and every manipulation tactic annotated.',
       directoryTitle: 'Ghana Cybercrime Reporting & Authorities Directory',
       directorySubtitle:
-        'Search official reporting channels by scam type. Contact details below include clearly marked verification placeholders for you to confirm.',
-      reportTitle: 'Anonymous Scam Report & Verified Community Alerts',
+        'Search official reporting channels by scam type and visit their official websites to confirm contact details.',
+      reportTitle: 'Anonymous Scam Report & Community Scam Alerts',
       reportSubtitle:
         'Share new scam patterns anonymously to warn other Ghanaians. We never ask for your name, phone number, or Mobile Money details.',
-      adminTitle: 'Protected Admin Review & Alert Publisher',
+      adminTitle: 'Admin Dashboard',
       newsTitle: 'Cybersecurity & Global Tech News Sign-Up Hub',
       creatorTitle: 'Built by Reindolf — Aspiring Cybersecurity Engineer',
     },

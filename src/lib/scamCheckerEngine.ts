@@ -59,7 +59,7 @@ export const RED_FLAG_INDICATORS: RedFlagIndicator[] = [
     questionTwi: 'Ehye bo se wobenya mfasoo kesee ntem (se ebia "Ma wo sika mmo ho mmienu wo nnonhwere 24 mu")?',
     weight: 35,
     explanation: 'Guaranteed high-yield "flipping" schemes on WhatsApp and Telegram are classic Ponzi or advance-fee scams.',
-    nextStep: 'Verify whether the firm is licensed by the Securities and Exchange Commission (SEC) Ghana or Bank of Ghana before sending a single pesewa.',
+    nextStep: 'Verify whether the firm is officially licensed by national financial regulators before sending a single pesewa.',
   },
   {
     id: 'scholarship_or_job_fee',

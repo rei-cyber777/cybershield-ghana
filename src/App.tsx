@@ -16,6 +16,7 @@ import { ProjectShowcase } from './components/ProjectShowcase';
 import { ReportingHub } from './components/ReportingHub';
 import { NewsletterForm } from './components/NewsletterForm';
 import { CreatorSection } from './components/CreatorSection';
+import { AdminDashboard } from './components/AdminDashboard';
 import { PROTECTION_STEPS } from './lib/data';
 import { Language, TRANSLATIONS } from './lib/i18n';
 import { Shield, Terminal, Globe2, Cpu, ArrowRight } from 'lucide-react';
@@ -25,13 +26,31 @@ const LazyHero3D = React.lazy(() =>
   import('./components/Hero3D').then((mod) => ({ default: mod.Hero3D }))
 );
 
+function checkIsAdminRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.replace(/\/+$/, '');
+  const hash = window.location.hash;
+  return path === '/admin' || hash === '#/admin';
+}
+
 export default function App() {
   const [lang, setLang] = useState<Language>('en');
   const [forceStatic3D, setForceStatic3D] = useState<boolean>(false);
   const [typedLength, setTypedLength] = useState<number>(0);
+  const [isAdminRoute, setIsAdminRoute] = useState<boolean>(checkIsAdminRoute);
 
   const t = TRANSLATIONS[lang];
   const fullMissionText = t.hero.missionTerminal;
+
+  useEffect(() => {
+    const onRouteChange = () => setIsAdminRoute(checkIsAdminRoute());
+    window.addEventListener('popstate', onRouteChange);
+    window.addEventListener('hashchange', onRouteChange);
+    return () => {
+      window.removeEventListener('popstate', onRouteChange);
+      window.removeEventListener('hashchange', onRouteChange);
+    };
+  }, []);
 
   // Terminal-style typing effect for the mission statement
   useEffect(() => {
@@ -57,6 +76,10 @@ export default function App() {
       setForceStatic3D(true);
     }
   }, []);
+
+  if (isAdminRoute) {
+    return <AdminDashboard />;
+  }
 
   return (
     <div
@@ -204,7 +227,7 @@ export default function App() {
                 13 Signatures
               </div>
               <div className="mt-1 text-xs text-slate-300">
-                Modular checklist + text pattern scanner in <code className="text-cyan-300">scamCheckerEngine.ts</code>
+                Rule-based checklist and suspicious message pattern scanner
               </div>
             </div>
 
@@ -274,7 +297,7 @@ export default function App() {
         <div className="circuit-divider" aria-hidden="true" />
 
         {/* 2. ILLUSTRATIVE THREAT MAP */}
-        <section aria-labelledby="threat-map-heading" className="space-y-6">
+        <section id="threat-map" aria-labelledby="threat-map-heading" className="space-y-6">
           <div className="max-w-3xl">
             <h2
               id="threat-map-heading"

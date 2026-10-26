@@ -222,15 +222,15 @@ export const ScamCard: React.FC<ScamCardProps> = ({ lang }) => {
         </div>
       </div>
 
-      {/* Real Anonymized Scam Examples Archive */}
+      {/* Illustrative Scam Examples Archive */}
       <div id="real-examples" className="cybershield-glass rounded-2xl p-6 sm:p-8">
         <div className="flex flex-col justify-between gap-4 border-b border-slate-800 pb-6 md:flex-row md:items-end">
           <div>
             <div className="text-xs font-mono text-cyan-300">
-              DECONSTRUCTED CASE ARCHIVE · ANONYMIZED EXAMPLES
+              EXAMPLE SCENARIOS · ILLUSTRATIVE ARCHIVE
             </div>
             <h3 className="mt-2 font-display text-2xl font-bold text-white">
-              Real Anonymized Scam Examples with Annotated Red Flags
+              Illustrative Scam Examples with Annotated Red Flags
             </h3>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -252,12 +252,14 @@ export const ScamCard: React.FC<ScamCardProps> = ({ lang }) => {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Anonymized Message Transcript */}
+          {/* Illustrative Message Transcript */}
           <div className="lg:col-span-6 rounded-xl border border-slate-800 bg-[#050814] p-5">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>{activeExample.category}</span>
               <span>·</span>
-              <span className="font-mono">{activeExample.channel}</span>
+              <span className="font-mono text-amber-300">
+                Example · Illustrative scenario ({activeExample.channel})
+              </span>
             </div>
             <h4 className="mt-2 font-display text-lg font-bold text-white">
               {activeExample.title}

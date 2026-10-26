@@ -90,12 +90,12 @@ export const SECURITY_PILLARS_OVERVIEW: SecurityPillarSummary[] = [
   {
     id: 'access-control',
     badge: 'PILLAR 03 · ACCESS CONTROL',
-    title: 'Locked-Down Database & Zero-PII Rules',
+    title: 'Private Submissions & Zero-PII Rules',
     plainEnglishIntro:
-      'Access control is like a one-way dropbox: anyone can submit a scam warning, but regular visitors can never open the box to read other people’s private data.',
+      'Access control works like a one-way dropbox: anyone can submit a scam warning, but visitors cannot open the box to read other people’s private submissions.',
     bulletPoints: [
-      'Uses PostgreSQL Row Level Security (RLS) so public visitors have INSERT-only permission and cannot list subscriber emails.',
-      'Holds new scam reports in a moderated review queue until an administrator verifies and publishes them.',
+      'Public visitors can submit reports or sign up for the digest, while subscriber lists and pending reports are restricted to the site admin.',
+      'Holds new scam reports in a private review queue before they can be published as community alerts.',
       'Collects zero personal identity fields (no names, phone numbers, or national IDs) on the anonymous reporting form.',
     ],
     accentColor: 'gold',
@@ -223,8 +223,8 @@ export const CORE_FEATURES: CoreFeatureItem[] = [
       'A visual guide and interactive WhatsApp message lab that breaks down the four biggest online scams in Ghana.',
     howItProtectsYou: [
       'Shows you side-by-side how each scam works, what red flags to look for, and what to do instead.',
-      'Lets you practice tapping suspicious parts of realistic fake WhatsApp and SMS messages in a safe sandbox.',
-      'Includes real anonymized scam messages with every manipulation trick highlighted and explained.',
+      'Lets you practice tapping suspicious parts of illustrative WhatsApp and SMS messages in a safe sandbox.',
+      'Includes annotated scam examples with every manipulation trick highlighted and explained.',
     ],
     ctaLabel: 'Explore Threat Guides',
     ctaHref: '#threats',
@@ -240,11 +240,11 @@ export const CORE_FEATURES: CoreFeatureItem[] = [
     oneLineSummary:
       'Report new scams anonymously in seconds and find the right Ghana authority to contact.',
     whatItIs:
-      'A simple zero-personal-data report form paired with a searchable directory of Ghana’s cybercrime reporting channels.',
+      'A simple zero-personal-data report form paired with a searchable directory of Ghana’s official cybercrime reporting channels.',
     howItProtectsYou: [
       'Lets you filter reporting channels by scam type so you know which institution handles your case.',
       'Allows you to submit warnings about new WhatsApp, SMS, or call scams without typing your name or phone number.',
-      'Uses clearly marked contact placeholders until official shortcodes and helpline numbers are verified by the project maintainer.',
+      'Links directly to official institutional websites so you can verify current contact details.',
     ],
     ctaLabel: 'Open Report & Directory',
     ctaHref: '#directory',
@@ -256,17 +256,17 @@ export const CORE_FEATURES: CoreFeatureItem[] = [
     iconName: 'Share2',
     accentColor: 'gold',
     status: 'Live',
-    title: 'Verified Scam Alerts',
+    title: 'Community Scam Alerts',
     oneLineSummary:
-      'Read admin-reviewed scam warnings and share them with family and friends on WhatsApp in one tap.',
+      'Read scam warnings and illustrative examples and share them with family and friends on WhatsApp in one tap.',
     whatItIs:
-      'A moderated community alert board where reviewed scam reports are published with clear prevention tips and a one-click WhatsApp share button.',
+      'A community alert board where published scam warnings and illustrative scenarios include clear prevention tips and a one-click WhatsApp share button.',
     howItProtectsYou: [
-      'Holds raw submissions in a protected review queue first so unverified rumors or spam do not clutter the feed.',
-      'Summarizes the exact channel, scam category, and a practical safety tip on every published alert.',
+      'Holds raw submissions for review first so unverified rumors or spam do not clutter the public feed.',
+      'Summarizes the exact channel, scam category, and a practical safety tip on every alert.',
       'Formats each alert into a ready-to-send WhatsApp message so you can warn campus or family groups fast.',
     ],
-    ctaLabel: 'View Verified Alerts',
+    ctaLabel: 'View Scam Alerts',
     ctaHref: '#report-scam',
   },
 
@@ -288,7 +288,7 @@ export const CORE_FEATURES: CoreFeatureItem[] = [
     howItProtectsYou: [
       'The scam report form has no fields for your name, phone number, email, or national ID.',
       'If someone accidentally types a 10-digit Ghana phone number inside a report description, our code replaces it with [REDACTED-PHONE] before saving.',
-      'For the optional newsletter, we only store your email and chosen topic interest, and explain clearly how to unsubscribe.',
+      'For the optional newsletter, we only store your email and chosen topic interests.',
     ],
     ctaLabel: 'Inspect Anonymous Form',
     ctaHref: '#report-scam',
@@ -304,7 +304,7 @@ export const CORE_FEATURES: CoreFeatureItem[] = [
     oneLineSummary:
       'Everything you read or submit on CyberShield travels over a standard encrypted HTTPS web connection.',
     whatItIs:
-      'Standard TLS/HTTPS transport encryption provided by our hosting platform and database API endpoints.',
+      'Standard TLS/HTTPS transport encryption provided by our hosting platform and database endpoints.',
     howItProtectsYou: [
       'Prevents people on the same public Wi-Fi network from snooping on the pages you are reading or the forms you submit.',
       'Ensures your browser verifies it is talking to the real CyberShield Ghana domain.',
@@ -320,17 +320,17 @@ export const CORE_FEATURES: CoreFeatureItem[] = [
     iconName: 'Database',
     accentColor: 'gold',
     status: 'Configured in SQL / Production',
-    title: 'Locked-Down Database',
+    title: 'Private Database Rules',
     oneLineSummary:
-      'Database security rules allow public visitors to submit reports or sign up, but never read other people’s emails.',
+      'Database security rules allow public visitors to submit reports or sign up, but never read other people’s emails or reports.',
     whatItIs:
-      'PostgreSQL Row Level Security (RLS) policies in our Supabase migration script that lock down table read access.',
+      'Strict database access policies that separate public form submissions from private admin review.',
     howItProtectsYou: [
-      'Anonymous visitors are granted INSERT-only access on the subscribers and scam_reports tables—public SELECT queries are blocked.',
-      'Subscriber emails can never be listed or scraped from the browser using the public anon key.',
-      'Double opt-in confirmation and one-click unsubscribe run through dedicated database functions using random hex tokens.',
+      'Visitors can submit scam reports, feedback, or newsletter sign-ups without exposing private records publicly.',
+      'Subscriber emails and pending reports cannot be listed or read by anonymous visitors.',
+      'Only an authenticated administrator can review pending reports, subscribers, and feedback.',
     ],
-    ctaLabel: 'View Supabase RLS SQL',
+    ctaLabel: 'Sign Up for Digest',
     ctaHref: '#cyber-news',
   },
   {
@@ -348,7 +348,7 @@ export const CORE_FEATURES: CoreFeatureItem[] = [
     howItProtectsYou: [
       'Invisible honeypot inputs catch automated bots that blindly fill every field on a web page.',
       'Rate-limit cooldown checks prevent rapid repeat form submissions from overwhelming the report queue or newsletter.',
-      'Strict character limits and email format checks block malformed payloads both in the browser and in PostgreSQL CHECK constraints.',
+      'Strict character limits and email format checks block malformed payloads.',
     ],
     ctaLabel: 'Test Newsletter Signup',
     ctaHref: '#cyber-news',

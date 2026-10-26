@@ -70,6 +70,7 @@ export interface AuthorityChannel {
   contactPlaceholder: string;
   verificationNote: string;
   whenToContact: string;
+  officialUrl: string;
 }
 
 export interface ScamReportItem {
@@ -77,7 +78,7 @@ export interface ScamReportItem {
   scamType: string;
   channel: 'WhatsApp' | 'SMS' | 'Phone Call' | 'Social Media';
   description: string;
-  status: 'pending' | 'verified' | 'dismissed';
+  status: 'pending' | 'verified' | 'rejected' | 'dismissed';
   createdAt: string;
 }
 
@@ -90,6 +91,8 @@ export interface VerifiedAlertItem {
   preventionTip: string;
   severity: 'Moderate' | 'High' | 'Critical';
   publishedAt: string;
+  published?: boolean;
+  isIllustrative?: boolean;
 }
 
 export interface CyberNewsItem {
@@ -103,6 +106,7 @@ export interface CyberNewsItem {
     | 'Global Tech & AI'
     | 'Student Safety Tips';
   url: string;
+  isIllustrative?: boolean;
 }
 
 export interface NewsletterTopicTrack {
@@ -139,7 +143,7 @@ export const PROTECTION_STEPS: ProtectionStep[] = [
     titleTwi: '03. Bo Amannee A Wommo Wo Din',
     subtitle: 'Warn the community without sharing any personal data.',
     description:
-      'Submit the scam category, channel, and how the fraudster approached you. Zero personal data is collected, and verified alerts can be shared straight to family WhatsApp groups.',
+      'Submit the scam category, channel, and how the fraudster approached you. No personal data is collected, and community scam alerts can be shared straight to family WhatsApp groups.',
     actionAnchor: '#report-scam',
     actionLabel: 'Submit Anonymous Report',
   },
@@ -147,9 +151,9 @@ export const PROTECTION_STEPS: ProtectionStep[] = [
     number: '04',
     title: 'Stay Informed & Connected',
     titleTwi: '04. Nya Nokware Kyererkyere Ne Hokwan Pa',
-    subtitle: 'Join Opportunity Bridge and receive verified cyber safety briefings.',
+    subtitle: 'Join Opportunity Bridge and receive educational cyber safety briefings.',
     description:
-      'Access real, vetted scholarships and student opportunities through Opportunity Bridge while staying ahead of emerging cyber threats across Ghana.',
+      'Access student opportunities through Opportunity Bridge while learning how to spot emerging online scam patterns across Ghana.',
     actionAnchor: '#opportunity-bridge',
     actionLabel: 'Explore Opportunity Bridge',
   },
@@ -161,7 +165,7 @@ export const THREAT_CATEGORIES: ThreatCategory[] = [
     title: 'Mobile Money (MoMo) Fraud',
     titleTwi: 'Mobile Money (MoMo) Nsisi',
     tagline: 'Fake deposit alerts, wrong-transfer reversal pressure, and cash-out approval traps.',
-    riskTag: 'Most Reported in Ghana',
+    riskTag: 'Common Scam Pattern',
     howItWorks: [
       'The scammer sends a fake SMS from a regular 10-digit phone number formatted to look like a MoMo credit alert.',
       'Seconds later, they call you sounding panicked—claiming they sent money by mistake to your number and begging you to send it to another number.',
@@ -183,7 +187,7 @@ export const THREAT_CATEGORIES: ThreatCategory[] = [
     title: 'Fake Jobs & Scholarships',
     titleTwi: 'Adwuma Ne Scholarship Atorofoo',
     tagline: 'Advance-fee "protocol slots", fake embassy visa forms, and bogus interview medical fees.',
-    riskTag: 'High Risk for Students',
+    riskTag: 'Student Scam Pattern',
     howItWorks: [
       'Fraudsters circulate flyers on WhatsApp and social media advertising "fully funded scholarships", "protocol recruitment slots", or remote student jobs.',
       'Applicants receive an instant "Congratulations" message without any real academic review or interview.',
@@ -197,7 +201,7 @@ export const THREAT_CATEGORIES: ThreatCategory[] = [
     whatToDo: [
       'Never pay money to secure a job interview, recruitment slot, or scholarship application.',
       'Verify opportunities directly on the official university, scholarship secretariat, or embassy website.',
-      'Use trusted student communities like Opportunity Bridge that vet opportunities and promote digital safety.',
+      'Use trusted student communities like Opportunity Bridge that share educational opportunities and promote digital safety.',
     ],
   },
   {
@@ -205,7 +209,7 @@ export const THREAT_CATEGORIES: ThreatCategory[] = [
     title: 'Investment & Crypto Doublers',
     titleTwi: 'Sika Mfasoo Ntemntem Nsisi',
     tagline: 'WhatsApp/Telegram "cash flipping" groups, unlicensed forex bots, and Ponzi tiers.',
-    riskTag: 'Severe Financial Loss',
+    riskTag: 'Financial Scam Pattern',
     howItWorks: [
       'You are added to a WhatsApp or Telegram group where "investors" post screenshots of GHS 500 turning into GHS 5,000 within hours.',
       'Most accounts in the group are controlled by the same scam ring staging fake testimonials to create fear of missing out (FOMO).',
@@ -217,7 +221,7 @@ export const THREAT_CATEGORIES: ThreatCategory[] = [
       'Demands for an extra "clearance fee" or "tax" before releasing your own funds.',
     ],
     whatToDo: [
-      'Check if the investment company is officially licensed by the Securities and Exchange Commission (SEC) Ghana or Bank of Ghana.',
+      'Always check whether an investment firm is officially licensed by national financial regulators before sending money.',
       'Never pay a "withdrawal fee" to unlock funds—it is a secondary trap to extract more money.',
       'Adjust your WhatsApp Privacy > Groups setting to "My Contacts" so strangers cannot add you to scam groups.',
     ],
@@ -227,7 +231,7 @@ export const THREAT_CATEGORIES: ThreatCategory[] = [
     title: 'Phishing & Account Takeover',
     titleTwi: 'Phishing Ne Akontaabu Wia',
     tagline: 'Lookalike banking pages, Ghana Card re-registration links, and WhatsApp 6-digit code theft.',
-    riskTag: 'Credential & Identity Theft',
+    riskTag: 'Account Takeover Pattern',
     howItWorks: [
       'An SMS, email, or WhatsApp message claims your bank account, SIM card, or student portal will be deactivated unless you verify your details immediately.',
       'The link opens a clone website that looks identical to a real bank or portal and steals your password, PIN, or Ghana Card number.',
@@ -249,11 +253,11 @@ export const THREAT_CATEGORIES: ThreatCategory[] = [
 export const SPOT_SCAM_SCENARIOS: SpotScamScenario[] = [
   {
     id: 'whatsapp-scholarship',
-    title: 'Scenario 1: The "Urgent International Scholarship" WhatsApp Message',
-    senderName: 'Global Youth Scholarship Desk',
-    senderNumber: '+233 55 [REDACTED] (Unverified Personal Number)',
+    title: 'Illustrative Scenario 1: The "Urgent International Scholarship" WhatsApp Message',
+    senderName: 'Global Youth Scholarship Desk (Illustrative Example)',
+    senderNumber: '+233 55 [REDACTED] (Illustrative Personal Number)',
     channel: 'WhatsApp',
-    timestamp: 'Today, 14:22',
+    timestamp: 'Illustrative scenario',
     segments: [
       {
         id: 'seg-1',
@@ -288,11 +292,11 @@ export const SPOT_SCAM_SCENARIOS: SpotScamScenario[] = [
   },
   {
     id: 'sms-momo-reversal',
-    title: 'Scenario 2: The "Wrong Transfer" Fake Deposit SMS',
-    senderName: '+233 24 [REDACTED]',
+    title: 'Illustrative Scenario 2: The "Wrong Transfer" Fake Deposit SMS',
+    senderName: '+233 24 [REDACTED] (Illustrative Example)',
     senderNumber: 'Sent from regular 10-digit mobile number (NOT official shortcode)',
     channel: 'SMS',
-    timestamp: 'Today, 09:47',
+    timestamp: 'Illustrative scenario',
     segments: [
       {
         id: 'sms-1',
@@ -300,7 +304,7 @@ export const SPOT_SCAM_SCENARIOS: SpotScamScenario[] = [
         isSuspicious: true,
         flagTitle: 'Spoofed Sender Number',
         explanation:
-          'Official Mobile Money transaction alerts come from verified network shortcodes, never from a standard 10-digit personal number.',
+          'Official Mobile Money transaction alerts come from network shortcodes, never from a standard 10-digit personal number.',
       },
       {
         id: 'sms-2',
@@ -326,7 +330,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 'q1',
     scenario:
-      'You receive an SMS from a normal 10-digit phone number saying you received GHS 850. Immediately, someone calls begging you to send the money back to another number because of a family emergency. What is your safest move?',
+      'Illustrative scenario: You receive an SMS from a normal 10-digit phone number saying you received GHS 850. Immediately, someone calls begging you to send the money back to another number because of a family emergency. What is your safest move?',
     options: [
       {
         id: 'q1-a',
@@ -340,7 +344,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
         text: 'Hang up, dial the official MoMo USSD code yourself to check your real balance, and tell them to use the official telecom reversal channel.',
         isCorrect: true,
         feedback:
-          'Spot on! Checking your balance via official USSD and insisting on official telecom reversal stops wrong-transfer scams 100% of the time.',
+          'Spot on! Checking your balance via official USSD and insisting on official telecom reversal stops wrong-transfer scams.',
       },
       {
         id: 'q1-c',
@@ -354,7 +358,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 'q2',
     scenario:
-      'A WhatsApp flyer offers a "Guaranteed Fully Funded Scholarship + Monthly Stipend", but asks applicants to pay a GHS 300 "application verification fee" to a personal MoMo number before midnight. How should you respond?',
+      'Illustrative scenario: A WhatsApp flyer offers a "Guaranteed Fully Funded Scholarship + Monthly Stipend", but asks applicants to pay a GHS 300 "application verification fee" to a personal MoMo number before midnight. How should you respond?',
     options: [
       {
         id: 'q2-a',
@@ -382,7 +386,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 'q3',
     scenario:
-      'Your classmate sends you a WhatsApp message saying: "Hey, I accidentally sent my 6-digit SMS verification code to your phone number, please forward it to me urgently." What is actually happening?',
+      'Illustrative scenario: Your classmate sends you a WhatsApp message saying: "Hey, I accidentally sent my 6-digit SMS verification code to your phone number, please forward it to me urgently." What is actually happening?',
     options: [
       {
         id: 'q3-a',
@@ -410,7 +414,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 'q4',
     scenario:
-      'While on a call with someone claiming to be telecom customer care, a pop-up appears on your phone screen asking you to enter your 4-digit MoMo PIN to "stop an unauthorized deduction". What does that pop-up really do?',
+      'Illustrative scenario: While on a call with someone claiming to be telecom customer care, a pop-up appears on your phone screen asking you to enter your 4-digit MoMo PIN to "stop an unauthorized deduction". What does that pop-up really do?',
     options: [
       {
         id: 'q4-a',
@@ -440,9 +444,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
 export const REAL_SCAM_EXAMPLES: RealScamExample[] = [
   {
     id: 'ex-momo-cashout',
-    title: 'The "Promo Bonus Approval" Cash-Out Trap',
+    title: 'Example (Illustrative Scenario): The "Promo Bonus Approval" Cash-Out Trap',
     category: 'Mobile Money Fraud',
-    channel: 'Phone Call + USSD Prompt',
+    channel: 'Phone Call + USSD Prompt (Illustrative)',
     rawMessage:
       'Caller (+233 54 [REDACTED]): "Hello cherished customer, I am calling from the Head Office Promotions Desk. You have won GHS 2,500 in our anniversary draw. We have pushed a claim menu to your screen—just enter your 4-digit PIN now so the GHS 2,500 reflects in your wallet."',
     annotations: [
@@ -466,9 +470,9 @@ export const REAL_SCAM_EXAMPLES: RealScamExample[] = [
   },
   {
     id: 'ex-protocol-job',
-    title: 'The "Protocol Recruitment Medical Fee" Scam',
+    title: 'Example (Illustrative Scenario): The "Protocol Recruitment Medical Fee" Scam',
     category: 'Fake Jobs & Scholarships',
-    channel: 'WhatsApp / Social Media',
+    channel: 'WhatsApp / Social Media (Illustrative)',
     rawMessage:
       'Dear Applicant, your name has been added to the Special Protocol List for the 2026 Graduate Intake. Do not disclose this to anyone. Send GHS 650 for your Medical & Background Clearance Folder to Officer Mensah on MoMo [059-REDACTED] before 4:00 PM today or your slot will be reassigned.',
     annotations: [
@@ -488,13 +492,13 @@ export const REAL_SCAM_EXAMPLES: RealScamExample[] = [
         detail: 'High-pressure deadlines prevent you from verifying with the official recruitment portal.',
       },
     ],
-    takeaway: 'Any "protocol slot" or scholarship that demands secrecy and a personal MoMo payment is 100% fraudulent.',
+    takeaway: 'Any "protocol slot" or scholarship that demands secrecy and a personal MoMo payment is fraudulent.',
   },
   {
     id: 'ex-telegram-invest',
-    title: 'The "GHS 300 to GHS 3,500 in 6 Hours" Flipping Group',
+    title: 'Example (Illustrative Scenario): The "GHS 300 to GHS 3,500 in 6 Hours" Flipping Group',
     category: 'Investment Scams',
-    channel: 'Telegram / WhatsApp Group',
+    channel: 'Telegram / WhatsApp Group (Illustrative)',
     rawMessage:
       'ADMIN: "Batch B payout completed! Congrats to Ama in Kumasi who invested GHS 300 at 8 AM and just received GHS 3,500! Only 4 VIP slots left today. DM Admin on [wa.me/REDACTED] to lock your package!"',
     annotations: [
@@ -509,85 +513,95 @@ export const REAL_SCAM_EXAMPLES: RealScamExample[] = [
         detail: 'Designed to rush students and workers into sending money before researching the scheme.',
       },
     ],
-    takeaway: 'Always verify investment firms with the Securities and Exchange Commission (SEC) Ghana before investing.',
+    takeaway: 'Always check whether an investment firm is officially licensed by national financial regulators before investing.',
   },
 ];
 
 export const GHANA_AUTHORITIES_DIRECTORY: AuthorityChannel[] = [
   {
     id: 'auth-csa',
-    organization: 'Cyber Security Authority (CSA) Ghana — National CERT',
+    organization: 'Cyber Security Authority (CSA) Ghana',
     role: 'National agency responsible for cybersecurity incident response, online fraud reporting, and public advisories.',
     scamTypes: ['Phishing', 'Investment Scams', 'Online Blackmail', 'Fake Jobs & Scholarships', 'Impersonation'],
-    contactPlaceholder: '[VERIFY PLACEHOLDER: Official CSA Ghana Shortcode / Helpline / Email]',
-    verificationNote: 'Placeholder — Replace with verified CSA Ghana reporting contacts before production deployment.',
+    contactPlaceholder: 'Verify current contacts on official website: csa.gov.gh',
+    verificationNote: 'Always confirm current reporting contacts directly on csa.gov.gh.',
     whenToContact: 'Report phishing domains, online investment fraud, impersonation accounts, and cyber extortion.',
+    officialUrl: 'https://www.csa.gov.gh/',
   },
   {
     id: 'auth-gps-cid',
-    organization: 'Ghana Police Service — Cybercrime Unit (CID)',
+    organization: 'Ghana Police Service',
     role: 'Law enforcement investigation of criminal fraud, identity theft, and financial extortion.',
     scamTypes: ['Mobile Money Fraud', 'Investment Scams', 'Fake Jobs & Scholarships', 'Identity Theft'],
-    contactPlaceholder: '[VERIFY PLACEHOLDER: Official Ghana Police Cybercrime Unit Desk Contact]',
-    verificationNote: 'Placeholder — Verify current CID Cybercrime Unit phone and email from official police.gov.gh.',
+    contactPlaceholder: 'Verify current contacts on official website: police.gov.gh',
+    verificationNote: 'Confirm current Cybercrime Unit contacts from official police.gov.gh.',
     whenToContact: 'When financial loss has occurred, threats are made, or you need a formal police report for bank/telecom investigation.',
+    officialUrl: 'https://police.gov.gh/',
   },
   {
-    id: 'auth-telecom-momo',
-    organization: 'Mobile Network Operators (MTN MoMo / Telecel Cash / AT Money)',
-    role: 'Direct wallet freeze, fraudulent number reporting, and transaction reversal assistance.',
-    scamTypes: ['Mobile Money Fraud', 'Wrong Transfer Reversal', 'Fake Cash-Out Prompts'],
-    contactPlaceholder: '[VERIFY PLACEHOLDER: Official Network Customer Care Shortcodes]',
-    verificationNote: 'Placeholder — Verify the exact official shortcode printed on the back of your SIM card pack.',
-    whenToContact: 'Immediately when a scammer calls from a mobile number or if you accidentally authorized a transaction.',
+    id: 'auth-bog',
+    organization: 'Bank of Ghana (BoG)',
+    role: 'Central bank overseeing licensed banks, payment service providers, and financial institutions.',
+    scamTypes: ['Mobile Money Fraud', 'Unlicensed Loan Apps', 'Banking Phishing'],
+    contactPlaceholder: 'Verify licensed institutions on official website: bog.gov.gh',
+    verificationNote: 'Confirm official licensed payment providers and complaint channels on bog.gov.gh.',
+    whenToContact: 'To verify licensed banks/payment providers or report unlicensed loan apps and banking fraud.',
+    officialUrl: 'https://www.bog.gov.gh/',
   },
   {
-    id: 'auth-bog-sec',
-    organization: 'Bank of Ghana (BoG) & Securities and Exchange Commission (SEC)',
-    role: 'Financial regulators overseeing licensed banks, payment providers, and investment schemes.',
-    scamTypes: ['Investment Scams', 'Unlicensed Loan Apps', 'Banking Phishing'],
-    contactPlaceholder: '[VERIFY PLACEHOLDER: Official BoG / SEC Ghana Consumer Complaint Portal]',
-    verificationNote: 'Placeholder — Confirm official bog.gov.gh and sec.gov.gh license verification portals.',
-    whenToContact: 'Before investing in any high-yield scheme or to report unlicensed money-doubling and predatory loan apps.',
+    id: 'auth-sec',
+    organization: 'Securities and Exchange Commission (SEC) Ghana',
+    role: 'Financial regulator overseeing capital markets and licensed investment schemes.',
+    scamTypes: ['Investment Scams', 'Fake Crypto / Forex Schemes'],
+    contactPlaceholder: 'Verify licensed investment firms on official website: sec.gov.gh',
+    verificationNote: 'Confirm whether an investment firm is licensed on sec.gov.gh.',
+    whenToContact: 'Before investing in any scheme or to report unlicensed money-doubling and investment fraud.',
+    officialUrl: 'https://sec.gov.gh/',
   },
 ];
 
 export const INITIAL_VERIFIED_ALERTS: VerifiedAlertItem[] = [
   {
     id: 'alert-1',
-    title: 'Fake "Student Laptop & Scholarship Grant" Links Circulating on WhatsApp',
+    title: 'Example (Illustrative Scenario): Fake "Student Laptop & Scholarship Grant" Links on WhatsApp',
     scamType: 'Fake Jobs & Scholarships',
     channel: 'WhatsApp',
     summary:
-      'Fraudulent links claiming to distribute free student laptops and instant bursaries are asking university and SHS students to pay a GHS 150 "delivery & processing fee" via personal MoMo.',
+      'Illustrative scenario: Links claiming to distribute free student laptops and instant bursaries ask students to pay a GHS 150 "delivery & processing fee" via personal MoMo.',
     preventionTip:
-      'Never pay delivery or verification fees to personal Mobile Money numbers. Verify legitimate student opportunities on official portals or Opportunity Bridge.',
-    severity: 'Critical',
-    publishedAt: '2026-10-20',
+      'Never pay delivery or verification fees to personal Mobile Money numbers. Verify student opportunities on official portals or Opportunity Bridge.',
+    severity: 'Moderate',
+    publishedAt: 'Illustrative scenario',
+    published: true,
+    isIllustrative: true,
   },
   {
     id: 'alert-2',
-    title: 'Spoofed SMS Credit Alerts Followed by Urgent "Wrong Transfer" Calls',
+    title: 'Example (Illustrative Scenario): Spoofed SMS Credit Alerts Followed by "Wrong Transfer" Calls',
     scamType: 'Mobile Money Fraud',
     channel: 'SMS',
     summary:
-      'Scammers are sending fake deposit messages from standard 10-digit numbers and calling within 30 seconds claiming the money was meant for hospital bills.',
+      'Illustrative scenario: Scammers send fake deposit messages from standard 10-digit numbers and call within seconds claiming the money was meant for hospital bills.',
     preventionTip:
       'Always check your actual wallet balance via your network’s official USSD code and ask the caller to request an official reversal through their telecom provider.',
-    severity: 'High',
-    publishedAt: '2026-10-18',
+    severity: 'Moderate',
+    publishedAt: 'Illustrative scenario',
+    published: true,
+    isIllustrative: true,
   },
   {
     id: 'alert-3',
-    title: 'WhatsApp 6-Digit Verification Code Takeover Targeting Study Groups',
+    title: 'Example (Illustrative Scenario): WhatsApp 6-Digit Verification Code Takeover in Study Groups',
     scamType: 'Phishing',
     channel: 'WhatsApp',
     summary:
-      'Compromised student accounts are messaging coursemates asking them to forward a 6-digit SMS code or lend urgent money.',
+      'Illustrative scenario: Compromised accounts message coursemates asking them to forward a 6-digit SMS code or lend urgent money.',
     preventionTip:
       'Enable Two-Step Verification in WhatsApp Settings > Account, and always call a friend by voice if they message asking for money or a code.',
-    severity: 'High',
-    publishedAt: '2026-10-14',
+    severity: 'Moderate',
+    publishedAt: 'Illustrative scenario',
+    published: true,
+    isIllustrative: true,
   },
 ];
 
@@ -597,18 +611,18 @@ export const INITIAL_PENDING_REPORTS: ScamReportItem[] = [
     scamType: 'Fake Jobs & Scholarships',
     channel: 'WhatsApp',
     description:
-      'Someone in a student group posted a link for a "Canada Work & Study Visa Waiver" asking for GHS 400 medical fee to a personal MoMo wallet.',
+      '[Example — Illustrative scenario] Someone in a student group posted a link for a "Canada Work & Study Visa Waiver" asking for GHS 400 medical fee to a personal MoMo wallet.',
     status: 'pending',
-    createdAt: '2026-10-22 11:15 UTC',
+    createdAt: 'Illustrative sample',
   },
   {
     id: 'rep-seed-102',
     scamType: 'Mobile Money Fraud',
     channel: 'Phone Call',
     description:
-      'Caller claimed my MoMo wallet had an "unclaimed loyalty bonus" and triggered a cash-out prompt asking me to enter my 4-digit PIN.',
+      '[Example — Illustrative scenario] Caller claimed my MoMo wallet had an "unclaimed loyalty bonus" and triggered a cash-out prompt asking me to enter my 4-digit PIN.',
     status: 'pending',
-    createdAt: '2026-10-22 13:40 UTC',
+    createdAt: 'Illustrative sample',
   },
 ];
 
@@ -618,28 +632,28 @@ export const NEWSLETTER_TOPIC_TRACKS: NewsletterTopicTrack[] = [
     label: 'Cybersecurity & Ghana Scam Alerts',
     badge: 'CYBER DEFENSE',
     description:
-      'Verified Mobile Money fraud warnings, CSA Ghana advisories, and phishing alerts.',
+      'Mobile Money fraud warnings, local scam pattern breakdowns, and phishing defense tips.',
   },
   {
     id: 'Global Tech & AI News',
     label: 'Global Tech & AI News',
     badge: 'GLOBAL TECH',
     description:
-      'Breakthroughs in AI, open-source software, cloud engineering, and global tech trends.',
+      'Developments in AI, open-source software, cloud engineering, and global tech trends.',
   },
   {
     id: 'Global Cyber Threat Intel',
     label: 'Global Cyber Threat Intelligence',
     badge: 'THREAT INTEL',
     description:
-      'CISA/CERT security briefings, browser & OS zero-day patches, and passkey standards.',
+      'Security briefings, browser & OS vulnerability patches, and passwordless authentication tips.',
   },
   {
     id: 'Student Tech & Scholarships',
     label: 'Student Tech & Scholarship Opportunities',
     badge: 'OPPORTUNITIES',
     description:
-      'Vetted internships, hackathons, and safe international scholarship briefings.',
+      'Student internships, hackathons, and safe international scholarship verification tips.',
   },
 ];
 
@@ -647,74 +661,61 @@ export const CURATED_CYBER_NEWS: CyberNewsItem[] = [
   {
     id: 'news-1',
     title:
-      'National Cyber Security Awareness Month: Protecting Mobile Money Users from Social Engineering',
-    source: 'Cyber Security Authority (CSA) Ghana Advisories',
-    date: 'October 2026',
+      'Example Topic: Protecting Mobile Money Users from Social Engineering & Reversal Tricks',
+    source: 'Illustrative scenario · CyberShield Educational Guide',
+    date: 'Illustrative scenario',
     category: 'Ghana Alerts',
-    url: 'https://www.csa.gov.gh/',
+    url: '#threats',
+    isIllustrative: true,
   },
   {
     id: 'news-2',
     title:
-      'CISA & Global CERT Guidance on Phishing-Resistant Multi-Factor Authentication',
-    source: 'CISA Cybersecurity Advisories',
-    date: 'October 2026',
+      'Example Topic: Using Multi-Factor Authentication & Two-Step Verification on WhatsApp',
+    source: 'Illustrative scenario · CyberShield Educational Guide',
+    date: 'Illustrative scenario',
     category: 'Global Cybersecurity',
-    url: 'https://www.cisa.gov/topics/cybersecurity-best-practices',
+    url: '#threats',
+    isIllustrative: true,
   },
   {
     id: 'news-3',
     title:
       'How Students Can Verify International Scholarships Without Falling for Advance-Fee Scams',
-    source: 'Opportunity Bridge Safety Briefing',
-    date: 'October 2026',
+    source: 'Opportunity Bridge Community',
+    date: 'Community Guide',
     category: 'Student Safety Tips',
     url: 'https://chat.whatsapp.com/IP8WRS5WGXC39ZlgSCH4f5',
+    isIllustrative: false,
   },
   {
     id: 'news-4',
     title:
-      'Notice to the Public on Unlicensed Online Investment and Money-Doubling Schemes',
-    source: 'Bank of Ghana / SEC Public Notices',
-    date: 'September 2026',
+      'Example Topic: Spotting Unlicensed Online Investment and "Cash-Flipping" Groups',
+    source: 'Illustrative scenario · CyberShield Educational Guide',
+    date: 'Illustrative scenario',
     category: 'Ghana Alerts',
-    url: 'https://www.bog.gov.gh/',
+    url: '#spot-the-scam',
+    isIllustrative: true,
   },
   {
     id: 'news-5',
     title:
-      'Global Adoption of FIDO2 Passkeys & Passwordless Authentication Across Web Browsers',
-    source: 'FIDO Alliance & W3C WebAuthn Standards',
-    date: 'October 2026',
+      'Example Topic: How Passkeys & Passwordless Logins Help Prevent Phishing',
+    source: 'Illustrative scenario · CyberShield Educational Guide',
+    date: 'Illustrative scenario',
     category: 'Global Tech & AI',
-    url: 'https://fidoalliance.org/passkeys/',
+    url: '#scam-checker',
+    isIllustrative: true,
   },
   {
     id: 'news-6',
     title:
-      'Open-Source AI Safety & Automated Vulnerability Detection in Modern Software Supply Chains',
-    source: 'GitHub Security Lab & Global Tech Review',
-    date: 'October 2026',
+      'Example Topic: Open-Source Security Habits & Dependency Safety for Student Developers',
+    source: 'Illustrative scenario · CyberShield Educational Guide',
+    date: 'Illustrative scenario',
     category: 'Global Tech & AI',
-    url: 'https://securitylab.github.com/',
-  },
-  {
-    id: 'news-7',
-    title:
-      'Subsea Fiber Connectivity & Edge Cloud Resilience Across West Africa',
-    source: 'Cloudflare Radar Global Internet Insights',
-    date: 'October 2026',
-    category: 'Global Tech & AI',
-    url: 'https://radar.cloudflare.com/',
-  },
-  {
-    id: 'news-8',
-    title:
-      'OWASP Top 10 & API Security Hardening for Student Developers and Startups',
-    source: 'OWASP Foundation Global Community',
-    date: 'September 2026',
-    category: 'Global Cybersecurity',
-    url: 'https://owasp.org/',
+    url: '#scam-checker',
+    isIllustrative: true,
   },
 ];
-

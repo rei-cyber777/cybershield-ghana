@@ -8,8 +8,8 @@ export interface SupabaseEnvConfig {
 }
 
 /**
- * Reads NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY
- * (with fallback to VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY).
+ * Reads VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+ * (with fallback to NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY).
  */
 export function getSupabaseEnvConfig(): SupabaseEnvConfig {
   const metaEnv =
@@ -23,22 +23,22 @@ export function getSupabaseEnvConfig(): SupabaseEnvConfig {
     {};
 
   const supabaseUrl = (
-    metaEnv.NEXT_PUBLIC_SUPABASE_URL ||
-    procEnv.NEXT_PUBLIC_SUPABASE_URL ||
     metaEnv.VITE_SUPABASE_URL ||
     procEnv.VITE_SUPABASE_URL ||
+    metaEnv.NEXT_PUBLIC_SUPABASE_URL ||
+    procEnv.NEXT_PUBLIC_SUPABASE_URL ||
     ''
   ).trim();
 
   const supabaseAnonKey = (
-    metaEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    procEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    procEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    procEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
     metaEnv.VITE_SUPABASE_ANON_KEY ||
     procEnv.VITE_SUPABASE_ANON_KEY ||
+    metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    procEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    procEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    metaEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    procEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     ''
   ).trim();
 
@@ -59,7 +59,7 @@ let cachedClient: SupabaseClient | null = null;
 
 /**
  * Returns a singleton Supabase browser client configured with
- * NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY.
+ * VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
  */
 export function getSupabaseClient(): SupabaseClient | null {
   const { supabaseUrl, supabaseAnonKey, isConfigured } = getSupabaseEnvConfig();

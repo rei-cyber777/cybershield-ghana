@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CURATED_CYBER_NEWS, NEWSLETTER_TOPIC_TRACKS } from '../lib/data';
 import { createClient } from '@/utils/supabase/client';
 import { getSupabaseClient } from '../lib/supabaseClient';
+import { checkRateLimit } from '../lib/storage';
 import {
   buildSubscriberInsertPayload,
   classifySupabaseSubscriberError,
@@ -10,8 +11,6 @@ import {
   Mail,
   CheckCircle2,
   ExternalLink,
-  Database,
-  Copy,
   Check,
   Globe,
   Shield,
@@ -19,26 +18,6 @@ import {
   ArrowRight,
   AlertCircle,
 } from 'lucide-react';
-
-const SUPABASE_MIGRATION_SQL = `-- public.subscribers table schema (only email & interests written on insert)
-CREATE TABLE IF NOT EXISTS public.subscribers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT UNIQUE NOT NULL,
-  interests TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Ensure subscriber emails are NEVER publicly readable
-ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow public read subscribers" ON public.subscribers;
-
--- Anonymous insert-only policy under Row Level Security (no SELECT permitted)
-DROP POLICY IF EXISTS "Allow anonymous insert subscribers" ON public.subscribers;
-CREATE POLICY "Allow anonymous insert subscribers"
-  ON public.subscribers FOR INSERT TO anon
-  WITH CHECK (
-    email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'
-  );`;
 
 type NewsHubTab = 'signup' | 'cyber-feed' | 'global-tech-feed';
 
@@ -58,12 +37,6 @@ export const NewsletterForm: React.FC = () => {
     type: 'idle' | 'confirmed' | 'error';
     text: string;
   }>({ type: 'idle', text: '' });
-  const [confirmedRecord, setConfirmedRecord] = useState<{
-    email: string;
-    interests: string;
-  } | null>(null);
-  const [showSqlModal, setShowSqlModal] = useState<boolean>(false);
-  const [copiedSql, setCopiedSql] = useState<boolean>(false);
 
   const toggleTrack = (trackId: string) => {
     setSelectedTracks((prev) => {
@@ -86,7 +59,6 @@ export const NewsletterForm: React.FC = () => {
 
     setIsSubmitting(true);
     setStatusMessage({ type: 'idle', text: '' });
-    setConfirmedRecord(null);
 
     // 1. Validate email and build insert payload with ONLY existing columns: { email, interests }
     const built = buildSubscriberInsertPayload(email, formattedInterests);
@@ -100,29 +72,37 @@ export const NewsletterForm: React.FC = () => {
       return;
     }
 
+    const rate = checkRateLimit('newsletter_signup', 5000);
+    if (!rate.allowed) {
+      setIsSubmitting(false);
+      setStatusMessage({
+        type: 'error',
+        text: `Please wait ${rate.waitSeconds} seconds before submitting again.`,
+      });
+      return;
+    }
+
     const { payload } = built;
 
-    // 2. Get Supabase browser client created from NEXT_PUBLIC_SUPABASE_URL &
-    //    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY
+    // 2. Get Supabase browser client
     const supabase = getSupabaseClient() ?? createClient();
     if (!supabase) {
       const missingEnvError = {
         code: 'SUPABASE_ENV_MISSING',
-        message:
-          'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.',
+        message: 'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables.',
       };
       console.error('[CyberShield Newsletter] Supabase client error:', missingEnvError);
       setIsSubmitting(false);
       setStatusMessage({
         type: 'error',
-        text: 'Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) in your environment variables.',
+        text: 'Newsletter service is temporarily unavailable. Please try again later.',
       });
       return;
     }
 
     // 3. Insert into 'subscribers' table:
     //    - Writes ONLY existing columns: { email, interests }
-    //    - Does NOT chain .select() (table is insert-only under Row Level Security)
+    //    - Does NOT chain .select() (table is insert-only for anonymous visitors)
     try {
       const { error } = await supabase.from('subscribers').insert({
         email: payload.email,
@@ -151,30 +131,17 @@ export const NewsletterForm: React.FC = () => {
     }
 
     // 4. Only reached after Supabase confirms the insert (error === null)
-    console.info('[CyberShield Newsletter] Supabase insert confirmed:', {
-      table: 'subscribers',
+    console.info('[CyberShield Newsletter] Subscription saved:', {
       email: payload.email,
       interests: payload.interests,
     });
 
     setIsSubmitting(false);
     setEmail('');
-    setConfirmedRecord({
-      email: payload.email,
-      interests: payload.interests,
-    });
     setStatusMessage({
       type: 'confirmed',
-      text: `You're subscribed! Your email (${payload.email}) and interests (${payload.interests}) have been saved to the CyberShield Ghana subscribers list.`,
+      text: "Thanks, you're on the list. We'll email you your first digest soon.",
     });
-  };
-
-  const handleCopySql = () => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(SUPABASE_MIGRATION_SQL);
-      setCopiedSql(true);
-      window.setTimeout(() => setCopiedSql(false), 2000);
-    }
   };
 
   const cyberNewsItems = CURATED_CYBER_NEWS.filter(
@@ -227,7 +194,7 @@ export const NewsletterForm: React.FC = () => {
             }`}
           >
             <Shield className="h-4 w-4" aria-hidden="true" />
-            <span>Cybersecurity Advisories ({cyberNewsItems.length})</span>
+            <span>Cybersecurity Topics ({cyberNewsItems.length})</span>
           </button>
 
           <button
@@ -243,12 +210,12 @@ export const NewsletterForm: React.FC = () => {
             }`}
           >
             <Globe className="h-4 w-4" aria-hidden="true" />
-            <span>Global Tech & AI Feed ({globalTechItems.length})</span>
+            <span>Global Tech & AI Topics ({globalTechItems.length})</span>
           </button>
         </div>
 
-        <div className="font-mono text-xs text-cyan-300">
-          Insert-Only RLS · Zero Public Email Exposure
+        <div className="text-xs text-slate-300">
+          We only use your email to send the news you asked for, and we never share it.
         </div>
       </div>
 
@@ -260,7 +227,7 @@ export const NewsletterForm: React.FC = () => {
           className="cybershield-glass rounded-2xl p-6 sm:p-10"
         >
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
-            {/* Left Column: Multi-Track Topic Selector & Privacy Guarantee */}
+            {/* Left Column: Multi-Track Topic Selector & Plain-Language Privacy Note */}
             <div className="lg:col-span-7 space-y-6">
               <div>
                 <div className="inline-flex items-center gap-1.5 font-mono text-xs text-cyan-300">
@@ -272,7 +239,7 @@ export const NewsletterForm: React.FC = () => {
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-300">
                   Select the topics you care about below—from Ghana Mobile Money scam alerts to
-                  global AI breakthroughs, passkeys, and cloud engineering news.
+                  global AI developments, passkeys, and cloud engineering news.
                 </p>
               </div>
 
@@ -330,57 +297,12 @@ export const NewsletterForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Privacy Note & Optional SQL Modal Trigger */}
+              {/* Plain-Language Privacy Line */}
               <div className="rounded-xl border border-slate-800 bg-[#060a18] p-4 text-xs leading-relaxed text-slate-300">
-                <strong className="block font-semibold text-cyan-300">
-                  Privacy Note (What We Collect & Row Level Security):
-                </strong>
-                We collect only your <code className="text-cyan-300">email</code> and selected{' '}
-                <code className="text-cyan-300">interests</code> to deliver your cybersecurity and
-                global tech briefings. Your email is protected by insert-only Row Level Security
-                (RLS) policies on <code className="text-cyan-300">public.subscribers</code> and is
-                never publicly readable.
+                <strong className="block font-semibold text-cyan-300">Privacy Promise:</strong>
+                We only save your email address and the topics you select so we can send your
+                digest. Your email is kept private and is never visible to other visitors.
               </div>
-
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowSqlModal((prev) => !prev)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-medium text-cyan-300 hover:border-cyan-400/50 transition-colors"
-                >
-                  <Database className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>
-                    {showSqlModal
-                      ? 'Hide Supabase `subscribers` Table & RLS SQL'
-                      : 'View Supabase `subscribers` Table & RLS SQL'}
-                  </span>
-                </button>
-              </div>
-
-              {showSqlModal && (
-                <div className="rounded-xl border border-cyan-400/30 bg-slate-950 p-4">
-                  <div className="flex items-center justify-between pb-2">
-                    <span className="font-mono text-xs text-cyan-300">
-                      public.subscribers (email, interests)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleCopySql}
-                      className="inline-flex items-center gap-1 rounded bg-slate-800 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-700"
-                    >
-                      {copiedSql ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                      <span>{copiedSql ? 'Copied' : 'Copy SQL'}</span>
-                    </button>
-                  </div>
-                  <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-slate-200">
-                    {SUPABASE_MIGRATION_SQL}
-                  </pre>
-                </div>
-              )}
             </div>
 
             {/* Right Column: Email & Cadence Sign-Up Form */}
@@ -453,7 +375,7 @@ export const NewsletterForm: React.FC = () => {
                       Weekly Cyber & Global Tech Digest (Every Friday)
                     </option>
                     <option value="Instant Alerts + Weekly Tech">
-                      Instant Critical Scam Alerts + Weekly Tech Roundup
+                      Instant Scam Alerts + Weekly Tech Roundup
                     </option>
                   </select>
                 </div>
@@ -473,7 +395,7 @@ export const NewsletterForm: React.FC = () => {
                   disabled={isSubmitting}
                   className="w-full rounded-xl bg-cyan-400 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-[0_0_22px_rgba(0,240,255,0.35)] hover:bg-cyan-300 disabled:opacity-60 transition-colors"
                 >
-                  {isSubmitting ? 'Saving to Supabase...' : 'Sign Up for Cyber & Global Tech News'}
+                  {isSubmitting ? 'Submitting...' : 'Sign Up for Cyber & Global Tech News'}
                 </button>
               </form>
 
@@ -481,7 +403,7 @@ export const NewsletterForm: React.FC = () => {
                 <div
                   role="status"
                   data-testid="newsletter-status"
-                  className={`mt-4 space-y-2.5 rounded-xl border p-4 text-xs ${
+                  className={`mt-4 rounded-xl border p-4 text-xs ${
                     statusMessage.type === 'error'
                       ? 'border-rose-400/50 bg-rose-950/40 text-rose-100'
                       : 'border-emerald-400/50 bg-emerald-950/35 text-emerald-100'
@@ -501,14 +423,6 @@ export const NewsletterForm: React.FC = () => {
                     )}
                     <p className="leading-relaxed font-medium">{statusMessage.text}</p>
                   </div>
-
-                  {statusMessage.type === 'confirmed' && confirmedRecord && (
-                    <div className="flex items-center justify-between border-t border-emerald-400/20 pt-2.5">
-                      <span className="font-mono text-[11px] text-emerald-300">
-                        Supabase INSERT Confirmed · Table: public.subscribers
-                      </span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -516,23 +430,23 @@ export const NewsletterForm: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: CYBERSECURITY ADVISORIES (GHANA & GLOBAL) */}
+      {/* TAB 2: CYBERSECURITY TOPICS (ILLUSTRATIVE EXAMPLES & GUIDES) */}
       {activeTab === 'cyber-feed' && (
         <div
           role="tabpanel"
-          aria-label="Cybersecurity Advisories"
+          aria-label="Cybersecurity Topics"
           className="cybershield-glass rounded-2xl p-6 sm:p-8"
         >
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
             <div>
               <div className="font-mono text-xs text-cyan-300">
-                CYBERSECURITY ADVISORIES · GHANA & GLOBAL CERT BRIEFINGS
+                EXAMPLE BRIEFING TOPICS · ILLUSTRATIVE SCENARIOS
               </div>
               <h3 className="mt-1 font-display text-2xl font-bold text-white">
-                Latest Cybersecurity Alerts & Advisories
+                Sample Cybersecurity Briefing Topics
               </h3>
               <p className="mt-1 text-xs text-slate-400">
-                Official advisories and safety briefings (headline, source, date, and direct link).
+                Illustrative examples of the topics covered in our digest, plus our community guide.
               </p>
             </div>
 
@@ -552,55 +466,60 @@ export const NewsletterForm: React.FC = () => {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {cyberNewsItems.map((item) => (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col justify-between rounded-xl border border-slate-800 bg-[#070d20] p-5 hover:border-cyan-400/50 transition-colors"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-mono text-cyan-300">{item.category}</span>
-                    <span className="font-mono">{item.date}</span>
+            {cyberNewsItems.map((item) => {
+              const isExternal = item.url.startsWith('http');
+              return (
+                <a
+                  key={item.id}
+                  href={item.url}
+                  target={isExternal ? '_blank' : undefined}
+                  rel={isExternal ? 'noopener noreferrer' : undefined}
+                  className="group flex flex-col justify-between rounded-xl border border-slate-800 bg-[#070d20] p-5 hover:border-cyan-400/50 transition-colors"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span className="font-mono text-cyan-300">{item.category}</span>
+                      <span className="font-mono text-amber-300">
+                        {item.isIllustrative ? 'Example · Illustrative scenario' : item.date}
+                      </span>
+                    </div>
+                    <h4 className="mt-2 font-display text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
+                      {item.title}
+                    </h4>
                   </div>
-                  <h4 className="mt-2 font-display text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
-                    {item.title}
-                  </h4>
-                </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-3 text-xs text-slate-300">
-                  <span>Source: {item.source}</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-cyan-300">
-                    <span>Read Source</span>
-                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                  </span>
-                </div>
-              </a>
-            ))}
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-3 text-xs text-slate-300">
+                    <span>{item.source}</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-cyan-300">
+                      <span>{isExternal ? 'Open Community Link' : 'Open Guide'}</span>
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* TAB 3: GLOBAL TECH & AI NEWS FEED */}
+      {/* TAB 3: GLOBAL TECH & AI TOPICS (ILLUSTRATIVE EXAMPLES) */}
       {activeTab === 'global-tech-feed' && (
         <div
           role="tabpanel"
-          aria-label="Global Tech and AI News Feed"
+          aria-label="Global Tech and AI Topics"
           className="cybershield-glass rounded-2xl p-6 sm:p-8"
         >
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
             <div>
               <div className="font-mono text-xs text-amber-300">
-                GLOBAL TECH & AI · SOFTWARE ENGINEERING, PASSKEYS & CLOUD INFRASTRUCTURE
+                EXAMPLE BRIEFING TOPICS · ILLUSTRATIVE SCENARIOS
               </div>
               <h3 className="mt-1 font-display text-2xl font-bold text-white">
-                Global Tech & AI Innovation Briefings
+                Sample Global Tech & AI Briefing Topics
               </h3>
               <p className="mt-1 text-xs text-slate-400">
-                Curated global technology breakthroughs, passwordless standards, AI safety, and
-                cloud connectivity updates.
+                Illustrative examples of global technology, passwordless login, and software safety
+                topics covered in our digest.
               </p>
             </div>
 
@@ -620,33 +539,38 @@ export const NewsletterForm: React.FC = () => {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {globalTechItems.map((item) => (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col justify-between rounded-xl border border-slate-800 bg-[#070d20] p-5 hover:border-amber-400/50 transition-colors"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-mono text-amber-300">{item.category}</span>
-                    <span className="font-mono">{item.date}</span>
+            {globalTechItems.map((item) => {
+              const isExternal = item.url.startsWith('http');
+              return (
+                <a
+                  key={item.id}
+                  href={item.url}
+                  target={isExternal ? '_blank' : undefined}
+                  rel={isExternal ? 'noopener noreferrer' : undefined}
+                  className="group flex flex-col justify-between rounded-xl border border-slate-800 bg-[#070d20] p-5 hover:border-amber-400/50 transition-colors"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span className="font-mono text-amber-300">{item.category}</span>
+                      <span className="font-mono text-cyan-300">
+                        {item.isIllustrative ? 'Example · Illustrative scenario' : item.date}
+                      </span>
+                    </div>
+                    <h4 className="mt-2 font-display text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                      {item.title}
+                    </h4>
                   </div>
-                  <h4 className="mt-2 font-display text-base font-bold text-white group-hover:text-amber-300 transition-colors">
-                    {item.title}
-                  </h4>
-                </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-3 text-xs text-slate-300">
-                  <span>Source: {item.source}</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-amber-300">
-                    <span>Read Source</span>
-                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                  </span>
-                </div>
-              </a>
-            ))}
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-3 text-xs text-slate-300">
+                    <span>{item.source}</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-amber-300">
+                      <span>{isExternal ? 'Open Link' : 'Open Guide'}</span>
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
       )}

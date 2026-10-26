@@ -1,17 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, MessageSquarePlus, FileCode2, CheckCircle2 } from 'lucide-react';
+import {
+  ShieldCheck,
+  MessageSquarePlus,
+  FileCode2,
+  CheckCircle2,
+  ExternalLink,
+  AlertCircle,
+} from 'lucide-react';
 import { processImageDataToMonochrome } from '../lib/portraitProcessor';
+import { submitAnonymousFeedback } from '../lib/storage';
 
 const CREATOR_PORTRAIT_SRC = '/assets/aistudio/rei_kn_d5c40a28.jpg';
 
 export const CreatorSection: React.FC = () => {
   const [feedbackText, setFeedbackText] = useState<string>('');
   const [feedbackCategory, setFeedbackCategory] = useState<string>('Suggestion');
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
+  const [honeypot, setHoneypot] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [feedbackStatus, setFeedbackStatus] = useState<{
+    type: 'idle' | 'success' | 'error';
+    message: string;
+  }>({ type: 'idle', message: '' });
   const [processedBwDataUrl, setProcessedBwDataUrl] = useState<string | null>(null);
-  const [activeDocTab, setActiveDocTab] = useState<
-    'README' | 'CONTRIBUTING' | 'LICENSE' | 'ATTRIBUTIONS'
-  >('README');
 
   // Process the uploaded portrait into a pure Black & White studio portrait
   // with green-screen chroma despill & dark studio vignette
@@ -71,11 +81,32 @@ export const CreatorSection: React.FC = () => {
     };
   }, []);
 
-  const handleFeedbackSubmit = (e: React.FormEvent) => {
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (feedbackText.trim().length < 5) return;
-    setFeedbackSubmitted(true);
+    setIsSubmitting(true);
+    setFeedbackStatus({ type: 'idle', message: '' });
+
+    const res = await submitAnonymousFeedback({
+      category: feedbackCategory,
+      message: feedbackText,
+      honeypot,
+    });
+
+    setIsSubmitting(false);
+
+    if (!res.ok) {
+      setFeedbackStatus({
+        type: 'error',
+        message: res.error || 'Could not send feedback. Please try again.',
+      });
+      return;
+    }
+
     setFeedbackText('');
+    setFeedbackStatus({
+      type: 'success',
+      message: 'Thank you! Your anonymous feedback has been sent.',
+    });
   };
 
   return (
@@ -126,7 +157,7 @@ export const CreatorSection: React.FC = () => {
                 href="#scam-checker"
                 className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 font-mono text-slate-300 hover:border-cyan-400/40 hover:text-white transition-colors"
               >
-                Scam Checker Engine
+                Scam Checker
               </a>
             </div>
           </div>
@@ -146,8 +177,8 @@ export const CreatorSection: React.FC = () => {
               fees, and fraudulent scholarship links.
             </p>
             <p className="text-sm leading-relaxed text-slate-300">
-              I built <strong>CyberShield Ghana</strong> as a free, 100% open-source platform so
-              anyone can learn how scams work, test suspicious messages before acting, and warn the
+              I built <strong>CyberShield Ghana</strong> as a free, open-source platform so anyone
+              can learn how scams work, test suspicious messages before acting, and warn the
               community without sacrificing their privacy. Alongside CyberShield, I started{' '}
               <a
                 href="https://chat.whatsapp.com/IP8WRS5WGXC39ZlgSCH4f5"
@@ -157,87 +188,45 @@ export const CreatorSection: React.FC = () => {
               >
                 Opportunity Bridge
               </a>{' '}
-              to connect over 1,000 students with verified scholarships and safe digital practices.
+              to connect over 1,000 students with educational opportunities and safe digital
+              practices.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 2. Open-Source Documentation & Anonymous Feedback */}
+      {/* 2. Simple Open-Source Link & Anonymous Feedback */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Left: Open-Source Repository Files Preview */}
-        <div className="lg:col-span-7 cybershield-glass rounded-2xl p-6 sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-2">
-              <FileCode2 className="h-5 w-5 text-cyan-400" aria-hidden="true" />
-              <h3 className="font-display text-lg font-bold text-white">
-                Open-Source Project Files
-              </h3>
+        {/* Left: Simple Open-Source Repository Card ("View on GitHub") */}
+        <div className="lg:col-span-7 cybershield-glass flex flex-col justify-between rounded-2xl p-6 sm:p-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 font-mono text-xs text-cyan-300">
+              <FileCode2 className="h-4 w-4" aria-hidden="true" />
+              <span>OPEN-SOURCE PROJECT · MIT LICENSE</span>
             </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              {(['README', 'CONTRIBUTING', 'LICENSE', 'ATTRIBUTIONS'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveDocTab(tab)}
-                  className={`rounded-lg px-3 py-1 text-xs font-mono transition-colors ${
-                    activeDocTab === tab
-                      ? 'bg-cyan-400 text-slate-950 font-semibold'
-                      : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
-                  }`}
-                >
-                  {tab}.md
-                </button>
-              ))}
-            </div>
+            <h3 className="font-display text-xl font-bold text-white">
+              Open-Source Cybersecurity Awareness for Ghana
+            </h3>
+            <p className="text-sm leading-relaxed text-slate-300">
+              CyberShield Ghana is open-source under the MIT License. Community members, educators,
+              and developers are welcome to explore the source code, suggest local language
+              improvements, or share new anonymized scam patterns.
+            </p>
           </div>
 
-          <div className="mt-4 rounded-xl border border-slate-800 bg-[#050814] p-4 font-mono text-xs leading-relaxed text-slate-300">
-            {activeDocTab === 'README' && (
-              <div className="space-y-2">
-                <div className="text-cyan-300 font-bold"># CyberShield Ghana (README.md)</div>
-                <p>
-                  Free, open-source cybersecurity awareness platform for Ghanaians. Includes
-                  procedural Three.js 3D shield (`Hero3D`), rule-based scam scanner
-                  (`src/lib/scamCheckerEngine.ts`), bilingual EN/Twi support, and Supabase RLS
-                  migrations (`supabase/migrations/001_extend_subscribers_and_reports.sql`).
-                </p>
-              </div>
-            )}
-            {activeDocTab === 'CONTRIBUTING' && (
-              <div className="space-y-2">
-                <div className="text-cyan-300 font-bold">
-                  # Contributing New Scam Examples (CONTRIBUTING.md)
-                </div>
-                <p>
-                  Strip all real phone numbers (`[REDACTED-NUMBER]`) and submit a JSON entry with
-                  `title`, `category`, `channel`, `anonymizedMessage`, `annotations`, and
-                  `whatToDo`.
-                </p>
-              </div>
-            )}
-            {activeDocTab === 'LICENSE' && (
-              <div className="space-y-2">
-                <div className="text-cyan-300 font-bold"># MIT License (LICENSE)</div>
-                <p>
-                  Copyright (c) 2026 Reindolf (CyberShield Ghana & Opportunity Bridge). Free to
-                  use, study, modify, and distribute under the permissive MIT License.
-                </p>
-              </div>
-            )}
-            {activeDocTab === 'ATTRIBUTIONS' && (
-              <div className="space-y-2">
-                <div className="text-cyan-300 font-bold">
-                  # Asset & Library Attributions (ATTRIBUTIONS.md)
-                </div>
-                <p>
-                  100% original procedural Three.js geometry and custom SVG threat illustrations.
-                  Fonts: Orbitron, Plus Jakarta Sans, JetBrains Mono (SIL OFL 1.1). Icons:
-                  lucide-react (ISC).
-                </p>
-              </div>
-            )}
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-800/80 pt-5">
+            <span className="text-xs text-slate-400">
+              We never collect personal data when you browse or use our tools.
+            </span>
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/50 bg-cyan-400/15 px-5 py-2.5 text-xs font-bold text-cyan-200 hover:bg-cyan-400 hover:text-slate-950 transition-colors whitespace-nowrap shrink-0"
+            >
+              <span>View on GitHub</span>
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
           </div>
         </div>
 
@@ -251,11 +240,24 @@ export const CreatorSection: React.FC = () => {
             Suggest a Feature or Local Translation
           </h3>
           <p className="mt-1 text-xs text-slate-300">
-            Help improve CyberShield Ghana—share feedback on scam guides, Twi translations, or new
-            campus safety resources.
+            Help improve CyberShield Ghana—share anonymous feedback on scam guides, Twi
+            translations, or new campus safety resources.
           </p>
 
           <form onSubmit={handleFeedbackSubmit} className="mt-4 space-y-3.5">
+            {/* Hidden Honeypot Input */}
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="feedback-hp-field">Do not fill</label>
+              <input
+                id="feedback-hp-field"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             <div>
               <label
                 htmlFor="feedback-category"
@@ -295,18 +297,27 @@ export const CreatorSection: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full rounded-xl border border-cyan-400/50 bg-cyan-400/15 px-4 py-2.5 text-xs font-bold text-cyan-200 hover:bg-cyan-400 hover:text-slate-950 transition-colors"
+              disabled={isSubmitting}
+              className="w-full rounded-xl border border-cyan-400/50 bg-cyan-400/15 px-4 py-2.5 text-xs font-bold text-cyan-200 hover:bg-cyan-400 hover:text-slate-950 disabled:opacity-60 transition-colors"
             >
-              Send Anonymous Feedback
+              {isSubmitting ? 'Sending...' : 'Send Anonymous Feedback'}
             </button>
 
-            {feedbackSubmitted && (
+            {feedbackStatus.type !== 'idle' && (
               <div
                 role="status"
-                className="flex items-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-950/30 p-3 text-xs text-emerald-200"
+                className={`flex items-center gap-2 rounded-lg border p-3 text-xs ${
+                  feedbackStatus.type === 'success'
+                    ? 'border-emerald-400/40 bg-emerald-950/30 text-emerald-200'
+                    : 'border-rose-400/40 bg-rose-950/30 text-rose-200'
+                }`}
               >
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>Thank you! Your feedback has been recorded for Reindolf’s review.</span>
+                {feedbackStatus.type === 'success' ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+                )}
+                <span>{feedbackStatus.message}</span>
               </div>
             )}
           </form>

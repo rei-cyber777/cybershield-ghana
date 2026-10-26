@@ -223,12 +223,11 @@ export const ScamChecker: React.FC<ScamCheckerProps> = ({ lang }) => {
               <div className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-4 text-xs text-slate-400">
                 <div className="flex items-center gap-2 font-mono text-slate-300">
                   <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0" />
-                  <span>Architecture Note for Contributors</span>
+                  <span>Privacy Note</span>
                 </div>
                 <p className="mt-1 leading-relaxed">
-                  The scoring engine lives in a standalone module (
-                  <code className="text-cyan-300">src/lib/scamCheckerEngine.ts</code>) so a machine
-                  learning classifier can replace or augment it without changing this interface.
+                  Your message is checked directly in your browser and is never saved. Never share
+                  your real MoMo PIN or OTP code anywhere online.
                 </p>
               </div>
             </div>

@@ -28,16 +28,16 @@ function buildProceduralWorldGlobeTexture(maxAnisotropy: number): THREE.CanvasTe
   const aCtx = albedoCanvas.getContext('2d');
 
   if (aCtx) {
-    // Deep cyber ocean base
+    // Rich deep cyber ocean base
     const oceanGrad = aCtx.createLinearGradient(0, 0, 0, H);
-    oceanGrad.addColorStop(0, '#040b1e');
-    oceanGrad.addColorStop(0.5, '#071a3e');
-    oceanGrad.addColorStop(1, '#040b1e');
+    oceanGrad.addColorStop(0, '#071432');
+    oceanGrad.addColorStop(0.5, '#0b2556');
+    oceanGrad.addColorStop(1, '#071432');
     aCtx.fillStyle = oceanGrad;
     aCtx.fillRect(0, 0, W, H);
 
     // Draw latitude / longitude graticule lines every 15 degrees
-    aCtx.strokeStyle = 'rgba(0, 240, 255, 0.18)';
+    aCtx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
     aCtx.lineWidth = 1;
 
     for (let lon = -165; lon <= 180; lon += 15) {
@@ -49,12 +49,12 @@ function buildProceduralWorldGlobeTexture(maxAnisotropy: number): THREE.CanvasTe
 
       if (lon === 0) {
         // Highlight Prime Meridian (passes directly through Ghana!)
-        aCtx.strokeStyle = 'rgba(245, 183, 0, 0.45)';
+        aCtx.strokeStyle = 'rgba(245, 183, 0, 0.55)';
         aCtx.beginPath();
         aCtx.moveTo(x, 0);
         aCtx.lineTo(x, H);
         aCtx.stroke();
-        aCtx.strokeStyle = 'rgba(0, 240, 255, 0.18)';
+        aCtx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
       }
     }
 
@@ -67,12 +67,12 @@ function buildProceduralWorldGlobeTexture(maxAnisotropy: number): THREE.CanvasTe
 
       if (lat === 0) {
         // Highlight Equator
-        aCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+        aCtx.strokeStyle = 'rgba(0, 240, 255, 0.48)';
         aCtx.beginPath();
         aCtx.moveTo(0, y);
         aCtx.lineTo(W, y);
         aCtx.stroke();
-        aCtx.strokeStyle = 'rgba(0, 240, 255, 0.18)';
+        aCtx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
       }
     }
 
@@ -86,10 +86,10 @@ function buildProceduralWorldGlobeTexture(maxAnisotropy: number): THREE.CanvasTe
       });
       aCtx.closePath();
 
-      aCtx.fillStyle = continent.fillColor;
+      aCtx.fillStyle = '#1e589e';
       aCtx.fill();
       aCtx.strokeStyle = '#00f0ff';
-      aCtx.lineWidth = 1.8;
+      aCtx.lineWidth = 1.9;
       aCtx.stroke();
 
       // Continent Name Label on the Globe Map
@@ -100,22 +100,22 @@ function buildProceduralWorldGlobeTexture(maxAnisotropy: number): THREE.CanvasTe
           W,
           H
         );
-        aCtx.font = 'bold 8px "JetBrains Mono", monospace';
+        aCtx.font = 'bold 8.5px "JetBrains Mono", monospace';
         aCtx.textAlign = 'center';
-        aCtx.fillStyle = '#e2e8f0';
+        aCtx.fillStyle = '#ffffff';
         aCtx.fillText(continent.name, lblPt.x, lblPt.y);
       }
     });
 
     // Soft golden radar halo around Ghana on the globe texture
     const ghanaPx = lonLatToEquirectangularXY(-0.2, 5.55, W, H);
-    const halo = aCtx.createRadialGradient(ghanaPx.x, ghanaPx.y, 2, ghanaPx.x, ghanaPx.y, 22);
-    halo.addColorStop(0, 'rgba(245, 183, 0, 0.95)');
-    halo.addColorStop(0.5, 'rgba(0, 240, 255, 0.35)');
+    const halo = aCtx.createRadialGradient(ghanaPx.x, ghanaPx.y, 2, ghanaPx.x, ghanaPx.y, 24);
+    halo.addColorStop(0, 'rgba(245, 183, 0, 0.98)');
+    halo.addColorStop(0.5, 'rgba(0, 240, 255, 0.42)');
     halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
     aCtx.fillStyle = halo;
     aCtx.beginPath();
-    aCtx.arc(ghanaPx.x, ghanaPx.y, 22, 0, Math.PI * 2);
+    aCtx.arc(ghanaPx.x, ghanaPx.y, 24, 0, Math.PI * 2);
     aCtx.fill();
 
     // Highlight Sovereign Ghana in Radiant Gold (#F5B700) on Africa
@@ -129,7 +129,7 @@ function buildProceduralWorldGlobeTexture(maxAnisotropy: number): THREE.CanvasTe
     aCtx.fillStyle = '#F5B700';
     aCtx.fill();
     aCtx.strokeStyle = '#FFFFFF';
-    aCtx.lineWidth = 1.5;
+    aCtx.lineWidth = 1.6;
     aCtx.stroke();
   }
 
@@ -142,8 +142,7 @@ function buildProceduralWorldGlobeTexture(maxAnisotropy: number): THREE.CanvasTe
 
 /**
  * Static SVG/CSS World Globe & Continents Fallback
- * Rendered on low-power devices, when prefers-reduced-motion is active,
- * when Save-Data is enabled, or when the user toggles "Data Saver Mode".
+ * Rendered only when the user explicitly toggles "Low-Data Mode" or if WebGL is unsupported.
  */
 const StaticShieldFallback: React.FC = () => {
   return (
@@ -257,27 +256,23 @@ const StaticShieldFallback: React.FC = () => {
 export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [webglUnsupported, setWebglUnsupported] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [activeContinentId, setActiveContinentId] = useState<string>('auto');
 
   const activeContinentRef = useRef<string>(activeContinentId);
   activeContinentRef.current = activeContinentId;
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
+  const dragOffsetRef = useRef({ rotY: 0, rotX: 0 });
+
+  const handleSelectContinent = (id: string) => {
+    setActiveContinentId(id);
+    dragOffsetRef.current = { rotY: 0, rotX: 0 };
+  };
 
   useEffect(() => {
-    if (forceStaticFallback || prefersReducedMotion || webglUnsupported) return;
+    if (forceStaticFallback || webglUnsupported) return;
     const container = mountRef.current;
     if (!container) return;
 
-    // 1. Detect Software WebGL (SwiftShader / llvmpipe) per Three.js skill rules
     const isSoftwareGl = (() => {
       try {
         const probeCanvas = document.createElement('canvas');
@@ -301,12 +296,16 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
         powerPreference: 'high-performance',
       });
     } catch {
-      setWebglUnsupported(true);
-      return;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+      } catch {
+        setWebglUnsupported(true);
+        return;
+      }
     }
 
-    const width = Math.max(container.clientWidth, 300);
-    const height = Math.max(container.clientHeight, 340);
+    const width = Math.max(container.clientWidth || 460, 300);
+    const height = Math.max(container.clientHeight || 420, 340);
 
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -318,29 +317,34 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050816, 0.072);
+    scene.fog = new THREE.FogExp2(0x050816, 0.055);
 
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
-    camera.position.set(0, 0.08, 6.8);
+    camera.position.set(0, 0.08, 6.75);
 
-    // 2. Studio Environment Map via RoomEnvironment
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmremGenerator.dispose();
+    let envTexture: THREE.Texture | null = null;
+    try {
+      const pmremGenerator = new THREE.PMREMGenerator(renderer);
+      envTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environment = envTexture;
+      pmremGenerator.dispose();
+    } catch {
+      // Continue with direct lights if PMREM fails
+    }
 
-    // 3. Balanced 3-Point Warm/Cool Lighting Rig
-    const hemiLight = new THREE.HemisphereLight(0x00f0ff, 0x050816, 1.05);
+    // Balanced 3-Point Warm/Cool Lighting Rig
+    const hemiLight = new THREE.HemisphereLight(0x48e5ff, 0x050816, 1.3);
     scene.add(hemiLight);
 
-    const keyLight = new THREE.DirectionalLight(0xfff4d6, 2.4);
+    const keyLight = new THREE.DirectionalLight(0xfff4d6, 2.5);
     keyLight.position.set(4.5, 5.0, 5.0);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x7c3aed, 2.0);
+    const rimLight = new THREE.DirectionalLight(0x7c3aed, 2.1);
     rimLight.position.set(-4.5, -2.0, -3.0);
     scene.add(rimLight);
 
-    // 4. Composite 9-Part 3D World Globe with Raised 3D Continent Maps & Orbital Shield
+    // Composite 9-Part 3D World Globe with Raised 3D Continent Maps & Orbital Shield
     const rootGroup = new THREE.Group();
     rootGroup.position.y = 0.25;
     scene.add(rootGroup);
@@ -361,22 +365,25 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
     globeGeo.rotateY(-Math.PI / 2);
 
     const globeMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
       map: albedoMap,
-      emissive: 0x0a2548,
+      emissive: 0x0e3160,
       emissiveMap: albedoMap,
-      emissiveIntensity: 0.45,
+      emissiveIntensity: 0.65,
       roughness: 0.35,
-      metalness: 0.5,
+      metalness: 0.22,
     });
     const globeMesh = new THREE.Mesh(globeGeo, globeMat);
     worldGlobeGroup.add(globeMesh);
 
     // Part 2: 3D Spherical Continent Coastline Polylines (Merged into 1 LineSegments draw call)
     const continentLineDisposables: { dispose: () => void }[] = [];
+    if (envTexture) continentLineDisposables.push(envTexture);
+
     const continentLineMat = new THREE.LineBasicMaterial({
       color: 0x00f0ff,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.92,
     });
     continentLineDisposables.push(continentLineMat);
 
@@ -444,8 +451,8 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
       color: 0xf5b700,
       emissive: 0xf5b700,
       emissiveIntensity: 0.85,
-      metalness: 0.92,
-      roughness: 0.15,
+      metalness: 0.65,
+      roughness: 0.18,
     });
     const beaconCore = new THREE.Mesh(beaconCoreGeo, beaconGoldMat);
     beaconCore.position.z = 0.05;
@@ -480,20 +487,20 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
       const arcMat = new THREE.LineBasicMaterial({
         color: 0x00f0ff,
         transparent: true,
-        opacity: 0.48,
+        opacity: 0.52,
       });
       const arcLine = new THREE.Line(arcGeo, arcMat);
       worldGlobeGroup.add(arcLine);
       arcDisposables.push(arcGeo, arcMat);
     });
 
-    // Part 5 & 6: Secondary Read — Counter-Rotating Orbital Defense Rings Around the World Globe
+    // Part 5 & 6: Counter-Rotating Orbital Defense Rings Around the World Globe
     const ringCyanGeo = new THREE.TorusGeometry(1.96, 0.02, 16, 80);
     const ringCyanMat = new THREE.MeshStandardMaterial({
       color: 0x00f0ff,
       emissive: 0x00f0ff,
-      emissiveIntensity: 0.55,
-      metalness: 0.8,
+      emissiveIntensity: 0.6,
+      metalness: 0.5,
       roughness: 0.2,
     });
     const ringCyan = new THREE.Mesh(ringCyanGeo, ringCyanMat);
@@ -504,9 +511,9 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
     const ringVioletMat = new THREE.MeshStandardMaterial({
       color: 0x7c3aed,
       emissive: 0x7c3aed,
-      emissiveIntensity: 0.6,
-      metalness: 0.65,
-      roughness: 0.4,
+      emissiveIntensity: 0.65,
+      metalness: 0.45,
+      roughness: 0.35,
     });
     const ringViolet = new THREE.Mesh(ringVioletGeo, ringVioletMat);
     ringViolet.rotation.set(-Math.PI / 3.0, -0.4, 0.2);
@@ -516,15 +523,15 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
     const ringGoldMat = new THREE.MeshStandardMaterial({
       color: 0xf5b700,
       emissive: 0xf5b700,
-      emissiveIntensity: 0.45,
-      metalness: 0.9,
+      emissiveIntensity: 0.5,
+      metalness: 0.65,
       roughness: 0.2,
     });
     const ringGold = new THREE.Mesh(ringGoldGeo, ringGoldMat);
     ringGold.rotation.set(Math.PI / 2.1, -0.15, 0.1);
     rootGroup.add(ringGold);
 
-    // Part 7: Accent Detail — InstancedMesh Orbiting Satellite Defense Nodes
+    // Part 7: InstancedMesh Orbiting Satellite Defense Nodes
     const isMobileViewport = window.innerWidth < 768;
     const nodeCount = isMobileViewport ? 28 : 48;
     const nodeGeo = new THREE.OctahedronGeometry(0.042, 0);
@@ -533,7 +540,7 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
       emissive: 0x00f0ff,
       emissiveIntensity: 0.45,
       roughness: 0.25,
-      metalness: 0.8,
+      metalness: 0.5,
     });
     const nodesInstanced = new THREE.InstancedMesh(nodeGeo, nodeMat, nodeCount);
 
@@ -604,28 +611,62 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
       renderer.compile(scene, camera);
     }
 
-    // Pointer parallax / globe rotation control
+    // Pointer parallax + interactive Click-and-Drag 360° Globe spinning
     const targetPointer = { x: 0, y: 0 };
     const currentPointer = { x: 0, y: 0 };
+    let isDragging = false;
+    let prevX = 0;
+    let prevY = 0;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      isDragging = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    };
 
     const handlePointerMove = (e: PointerEvent) => {
       const rect = container.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
       const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const ny = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       targetPointer.x = THREE.MathUtils.clamp(nx, -1, 1);
       targetPointer.y = THREE.MathUtils.clamp(ny, -1, 1);
+
+      if (isDragging) {
+        const dx = e.clientX - prevX;
+        const dy = e.clientY - prevY;
+        prevX = e.clientX;
+        prevY = e.clientY;
+        dragOffsetRef.current.rotY += dx * 0.008;
+        dragOffsetRef.current.rotX = THREE.MathUtils.clamp(
+          dragOffsetRef.current.rotX + dy * 0.006,
+          -0.8,
+          0.8
+        );
+      }
     };
 
+    const handlePointerUp = () => {
+      isDragging = false;
+    };
+
+    container.addEventListener('pointerdown', handlePointerDown);
     container.addEventListener('pointermove', handlePointerMove, { passive: true });
+    container.addEventListener('pointerup', handlePointerUp);
+    container.addEventListener('pointerleave', handlePointerUp);
 
     const handleResize = () => {
       if (!container) return;
-      const w = Math.max(container.clientWidth, 280);
-      const h = Math.max(container.clientHeight, 320);
+      const w = Math.max(container.clientWidth || 460, 280);
+      const h = Math.max(container.clientHeight || 420, 320);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(handleResize) : null;
+    if (resizeObserver) resizeObserver.observe(container);
     window.addEventListener('resize', handleResize);
 
     const clock = new THREE.Clock();
@@ -633,7 +674,6 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
     let isDisposed = false;
     let isInViewport = true;
 
-    // Software WebGL fence-sync pacing helper
     function afterDraw(cb: () => void) {
       if (isDisposed) return;
       const gl = renderer.getContext() as WebGL2RenderingContext;
@@ -647,12 +687,12 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
             frameId = window.setTimeout(poll, 5);
           } else {
             if (sync) gl.deleteSync(sync);
-            frameId = window.setTimeout(cb, 140);
+            frameId = window.setTimeout(cb, 110);
           }
         };
         frameId = window.setTimeout(poll, 5);
       } else {
-        frameId = window.setTimeout(cb, 140);
+        frameId = window.setTimeout(cb, 110);
       }
     }
 
@@ -670,11 +710,12 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
 
       const selectedContinent = activeContinentRef.current;
       const preset = GLOBE_CONTINENT_PRESETS.find((p) => p.id === selectedContinent);
+      const drag = dragOffsetRef.current;
 
       if (!preset || preset.id === 'auto') {
-        // Continuous 360° world globe rotation so all continents rotate into view
-        const targetY = -0.15 + elapsed * 0.24 + currentPointer.x * 0.85;
-        const targetX = 0.14 + currentPointer.y * 0.32;
+        // Continuous 360° world globe rotation + user drag offset
+        const targetY = -0.15 + elapsed * 0.24 + currentPointer.x * 0.45 + drag.rotY;
+        const targetX = 0.14 + currentPointer.y * 0.22 + drag.rotX;
         worldGlobeGroup.rotation.y = THREE.MathUtils.damp(
           worldGlobeGroup.rotation.y,
           targetY,
@@ -688,9 +729,9 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
           dt
         );
       } else {
-        // Smoothly rotate the 3D World Globe to focus on the chosen continent's map
-        const targetY = preset.targetRotY + currentPointer.x * 0.45;
-        const targetX = preset.targetRotX + currentPointer.y * 0.25;
+        // Smoothly rotate the 3D World Globe to focus on the chosen continent's map + user drag
+        const targetY = preset.targetRotY + currentPointer.x * 0.35 + drag.rotY;
+        const targetX = preset.targetRotX + currentPointer.y * 0.2 + drag.rotX;
         worldGlobeGroup.rotation.y = THREE.MathUtils.damp(
           worldGlobeGroup.rotation.y,
           targetY,
@@ -753,9 +794,13 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
     return () => {
       isDisposed = true;
       if (observer) observer.disconnect();
+      if (resizeObserver) resizeObserver.disconnect();
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
+      container.removeEventListener('pointerdown', handlePointerDown);
       container.removeEventListener('pointermove', handlePointerMove);
+      container.removeEventListener('pointerup', handlePointerUp);
+      container.removeEventListener('pointerleave', handlePointerUp);
       window.removeEventListener('resize', handleResize);
       globeGeo.dispose();
       globeMat.dispose();
@@ -779,9 +824,9 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
       shadowTex.dispose();
       renderer.dispose();
     };
-  }, [forceStaticFallback, prefersReducedMotion, webglUnsupported]);
+  }, [forceStaticFallback, webglUnsupported]);
 
-  if (forceStaticFallback || prefersReducedMotion || webglUnsupported) {
+  if (forceStaticFallback || webglUnsupported) {
     return <StaticShieldFallback />;
   }
 
@@ -790,9 +835,9 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
       <div
         ref={mountRef}
         data-testid="hero-3d-canvas-container"
-        aria-label="Interactive 3D World Globe with maps of every continent and Ghana highlighted"
+        aria-label="Interactive 3D World Globe with maps of every continent and Ghana highlighted. Drag to spin or click a continent below."
         role="img"
-        className="h-full w-full overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-b from-[#081029]/70 to-[#050816]/90"
+        className="h-full w-full cursor-grab active:cursor-grabbing overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-b from-[#081029]/70 to-[#050816]/90"
       />
 
       {/* Non-occluding Unified Bottom Dock: Continent Map Selector */}
@@ -808,7 +853,7 @@ export const Hero3D: React.FC<Hero3DProps> = ({ forceStaticFallback }) => {
               <button
                 key={preset.id}
                 type="button"
-                onClick={() => setActiveContinentId(preset.id)}
+                onClick={() => handleSelectContinent(preset.id)}
                 className={`rounded-md px-1.5 py-1 font-mono text-[9.5px] font-bold transition-colors whitespace-nowrap shrink-0 ${
                   isSelected
                     ? 'bg-cyan-400 text-slate-950'

@@ -52,7 +52,7 @@ export const SpotTheScamLab: React.FC = () => {
                   : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
               }`}
             >
-              Scenario {idx + 1}: {item.channel}
+              Illustrative Scenario {idx + 1}: {item.channel}
             </button>
           ))}
         </div>
@@ -76,12 +76,12 @@ export const SpotTheScamLab: React.FC = () => {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Realistic Fake WhatsApp / SMS Chat Frame */}
+        {/* Illustrative WhatsApp / SMS Chat Frame */}
         <div className="lg:col-span-7 rounded-2xl border border-slate-800 bg-[#071018] p-5 shadow-inner">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
               <div className="text-xs font-mono text-emerald-400">
-                {scenario.channel} Message Simulation
+                Illustrative Scenario · {scenario.channel} Message Simulation
               </div>
               <div className="mt-0.5 text-sm font-bold text-white">{scenario.senderName}</div>
               <div className="font-mono text-xs text-slate-400">{scenario.senderNumber}</div>
