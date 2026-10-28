@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { CURATED_CYBER_NEWS, NEWSLETTER_TOPIC_TRACKS } from '../lib/data';
-import { createClient } from '@/utils/supabase/client';
-import { getSupabaseClient } from '../lib/supabaseClient';
 import { checkRateLimit } from '../lib/storage';
-import {
-  buildSubscriberInsertPayload,
-  classifySupabaseSubscriberError,
-} from '../lib/supabaseNewsletter';
+import { buildSubscriberInsertPayload } from '../lib/supabaseNewsletter';
 import {
   Mail,
   CheckCircle2,
@@ -53,17 +48,23 @@ export const NewsletterForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (honeypot.trim().length > 0) {
-      return;
-    }
-
     setIsSubmitting(true);
     setStatusMessage({ type: 'idle', text: '' });
 
-    // 1. Validate email and build insert payload with ONLY existing columns: { email, interests }
+    // If honeypot is filled, send to /api/subscribe (which returns neutral 200 without writing)
+    if (honeypot.trim().length > 0) {
+      setIsSubmitting(false);
+      setEmail('');
+      setStatusMessage({
+        type: 'confirmed',
+        text: 'Check your inbox to confirm your subscription.',
+      });
+      return;
+    }
+
+    // 1. Client-side email format check before calling /api/subscribe
     const built = buildSubscriberInsertPayload(email, formattedInterests);
     if (!built.ok) {
-      console.error('[CyberShield Newsletter] Validation error:', built.error);
       setIsSubmitting(false);
       setStatusMessage({
         type: 'error',
@@ -84,64 +85,51 @@ export const NewsletterForm: React.FC = () => {
 
     const { payload } = built;
 
-    // 2. Get Supabase browser client
-    const supabase = getSupabaseClient() ?? createClient();
-    if (!supabase) {
-      const missingEnvError = {
-        code: 'SUPABASE_ENV_MISSING',
-        message: 'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables.',
-      };
-      console.error('[CyberShield Newsletter] Supabase client error:', missingEnvError);
-      setIsSubmitting(false);
-      setStatusMessage({
-        type: 'error',
-        text: 'Newsletter service is temporarily unavailable. Please try again later.',
-      });
-      return;
-    }
-
-    // 3. Insert into 'subscribers' table:
-    //    - Writes ONLY existing columns: { email, interests }
-    //    - Does NOT chain .select() (table is insert-only for anonymous visitors)
+    // 2. Call serverless function POST /api/subscribe
     try {
-      const { error } = await supabase.from('subscribers').insert({
-        email: payload.email,
-        interests: payload.interests,
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: payload.email,
+          interests: payload.interests,
+          honeypot,
+        }),
       });
 
-      if (error) {
-        console.error('[CyberShield Newsletter] Supabase insert error:', error);
-        const classified = classifySupabaseSubscriberError(error);
+      const data = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+        error?: string;
+      };
+
+      if (!response.ok || data.ok === false) {
         setIsSubmitting(false);
         setStatusMessage({
           type: 'error',
-          text: classified.userMessage,
+          text:
+            data.error ||
+            'Unable to send confirmation email right now. Please try again shortly.',
         });
         return;
       }
+
+      setIsSubmitting(false);
+      setEmail('');
+      setStatusMessage({
+        type: 'confirmed',
+        text: data.message || 'Check your inbox to confirm your subscription.',
+      });
     } catch (networkErr) {
-      console.error('[CyberShield Newsletter] Supabase network failure:', networkErr);
-      const classified = classifySupabaseSubscriberError(networkErr);
+      console.error('[CyberShield Newsletter] /api/subscribe network failure:', networkErr);
       setIsSubmitting(false);
       setStatusMessage({
         type: 'error',
-        text: classified.userMessage,
+        text: 'Network error while connecting to the subscription server. Please check your connection and try again.',
       });
-      return;
     }
-
-    // 4. Only reached after Supabase confirms the insert (error === null)
-    console.info('[CyberShield Newsletter] Subscription saved:', {
-      email: payload.email,
-      interests: payload.interests,
-    });
-
-    setIsSubmitting(false);
-    setEmail('');
-    setStatusMessage({
-      type: 'confirmed',
-      text: "Thanks, you're on the list. We'll email you your first digest soon.",
-    });
   };
 
   const cyberNewsItems = CURATED_CYBER_NEWS.filter(
@@ -297,11 +285,15 @@ export const NewsletterForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Plain-Language Privacy Line */}
+              {/* Plain-Language Double Opt-In Privacy Note */}
               <div className="rounded-xl border border-slate-800 bg-[#060a18] p-4 text-xs leading-relaxed text-slate-300">
-                <strong className="block font-semibold text-cyan-300">Privacy Promise:</strong>
-                We only save your email address and the topics you select so we can send your
-                digest. Your email is kept private and is never visible to other visitors.
+                <strong className="block font-semibold text-cyan-300">
+                  Privacy &amp; Double Opt-In Promise:
+                </strong>
+                When you sign up, our server sends a confirmation link to your inbox. We only send
+                digests after you click that link to verify your email, we never reveal whether an
+                address is subscribed, and every email includes a one-click unsubscribe link that
+                deletes your record immediately.
               </div>
             </div>
 

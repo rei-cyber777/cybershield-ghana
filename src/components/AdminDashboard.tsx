@@ -91,7 +91,7 @@ export const AdminDashboard: React.FC = () => {
           .order('published_at', { ascending: false }),
         supabase
           .from('subscribers')
-          .select('id, email, interests, created_at')
+          .select('id, email, interests, confirmed, confirmed_at, created_at')
           .order('created_at', { ascending: false }),
         supabase
           .from('feedback')
@@ -943,6 +943,7 @@ export const AdminDashboard: React.FC = () => {
                       <thead>
                         <tr className="border-b border-slate-800 font-mono text-slate-400">
                           <th className="py-2.5 pr-4">Email</th>
+                          <th className="py-2.5 pr-4">Opt-In Status</th>
                           <th className="py-2.5 pr-4">Interests</th>
                           <th className="py-2.5 pr-4">Joined</th>
                           <th className="py-2.5 text-right">Actions</th>
@@ -952,6 +953,17 @@ export const AdminDashboard: React.FC = () => {
                         {subscribers.map((sub) => (
                           <tr key={sub.id}>
                             <td className="py-3 pr-4 font-mono text-white">{sub.email}</td>
+                            <td className="py-3 pr-4 font-mono">
+                              {sub.confirmed ? (
+                                <span className="rounded bg-emerald-950/60 px-2 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-400/30">
+                                  CONFIRMED
+                                </span>
+                              ) : (
+                                <span className="rounded bg-amber-950/60 px-2 py-0.5 text-[11px] font-bold text-amber-300 border border-amber-400/30">
+                                  PENDING
+                                </span>
+                              )}
+                            </td>
                             <td className="py-3 pr-4 text-slate-300">{sub.interests}</td>
                             <td className="py-3 pr-4 font-mono text-slate-400">
                               {String(sub.created_at).slice(0, 16).replace('T', ' ')}

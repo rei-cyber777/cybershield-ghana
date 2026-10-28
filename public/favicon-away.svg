@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="awayGrad" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F5B700" />
+      <stop offset="100%" stop-color="#FF1E8A" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0A0612" />
+  <path
+    d="M32 6L11 15V30.5C11 44.4 19.95 56.85 32 60C44.05 56.85 53 44.4 53 30.5V15L32 6Z"
+    fill="#190B1E"
+    stroke="url(#awayGrad)"
+    stroke-width="3.5"
+    stroke-linejoin="round"
+  />
+  <path d="M32 19V35" stroke="#F5B700" stroke-width="4.5" stroke-linecap="round" />
+  <circle cx="32" cy="44" r="3" fill="#FF1E8A" />
+</svg>

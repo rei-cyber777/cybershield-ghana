@@ -17,8 +17,10 @@ import { ReportingHub } from './components/ReportingHub';
 import { NewsletterForm } from './components/NewsletterForm';
 import { CreatorSection } from './components/CreatorSection';
 import { AdminDashboard } from './components/AdminDashboard';
+import { SubscriptionStatusPage } from './components/SubscriptionStatusPage';
 import { PROTECTION_STEPS } from './lib/data';
 import { Language, TRANSLATIONS } from './lib/i18n';
+import { initTabVisibilityListener } from './lib/tabVisibility';
 import { Shield, Terminal, Globe2, Cpu, ArrowRight } from 'lucide-react';
 
 // Lazy-load the 3D scene so the page renders immediately on mobile / slow connections
@@ -26,24 +28,34 @@ const LazyHero3D = React.lazy(() =>
   import('./components/Hero3D').then((mod) => ({ default: mod.Hero3D }))
 );
 
-function checkIsAdminRoute(): boolean {
-  if (typeof window === 'undefined') return false;
+type AppRouteMode = 'home' | 'admin' | 'confirmed' | 'unsubscribed';
+
+function detectRouteMode(): AppRouteMode {
+  if (typeof window === 'undefined') return 'home';
   const path = window.location.pathname.replace(/\/+$/, '');
   const hash = window.location.hash;
-  return path === '/admin' || hash === '#/admin';
+  if (path === '/admin' || hash === '#/admin') return 'admin';
+  if (path === '/confirmed' || hash === '#/confirmed') return 'confirmed';
+  if (path === '/unsubscribed' || hash === '#/unsubscribed') return 'unsubscribed';
+  return 'home';
 }
 
 export default function App() {
   const [lang, setLang] = useState<Language>('en');
   const [forceStatic3D, setForceStatic3D] = useState<boolean>(false);
   const [typedLength, setTypedLength] = useState<number>(0);
-  const [isAdminRoute, setIsAdminRoute] = useState<boolean>(checkIsAdminRoute);
+  const [routeMode, setRouteMode] = useState<AppRouteMode>(detectRouteMode);
 
   const t = TRANSLATIONS[lang];
   const fullMissionText = t.hero.missionTerminal;
 
+  // Swap tab title ("Come back to CyberShield! 🛡️") and favicon when user switches tabs
   useEffect(() => {
-    const onRouteChange = () => setIsAdminRoute(checkIsAdminRoute());
+    return initTabVisibilityListener();
+  }, []);
+
+  useEffect(() => {
+    const onRouteChange = () => setRouteMode(detectRouteMode());
     window.addEventListener('popstate', onRouteChange);
     window.addEventListener('hashchange', onRouteChange);
     return () => {
@@ -77,8 +89,12 @@ export default function App() {
     }
   }, []);
 
-  if (isAdminRoute) {
+  if (routeMode === 'admin') {
     return <AdminDashboard />;
+  }
+
+  if (routeMode === 'confirmed' || routeMode === 'unsubscribed') {
+    return <SubscriptionStatusPage mode={routeMode} />;
   }
 
   return (

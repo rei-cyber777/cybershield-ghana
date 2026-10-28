@@ -27,6 +27,8 @@ export interface SubscriberRow {
   id: string;
   email: string;
   interests: string;
+  confirmed?: boolean;
+  confirmed_at?: string | null;
   created_at: string;
 }
 
@@ -78,12 +80,14 @@ export function formatSubscribersToCsv(rows: SubscriberRow[]): string {
     return clean;
   };
 
-  const header = ['id', 'email', 'interests', 'created_at'].join(',');
+  const header = ['id', 'email', 'interests', 'confirmed', 'confirmed_at', 'created_at'].join(',');
   const lines = rows.map((row) =>
     [
       escapeCsvCell(row.id),
       escapeCsvCell(row.email),
       escapeCsvCell(row.interests),
+      escapeCsvCell(row.confirmed ? 'true' : 'false'),
+      escapeCsvCell(row.confirmed_at || ''),
       escapeCsvCell(row.created_at),
     ].join(',')
   );
