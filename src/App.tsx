@@ -11,6 +11,7 @@ import { ThreatMap } from './components/ThreatMap';
 import { ScamCard } from './components/ScamCard';
 import { SpotTheScamLab } from './components/SpotTheScamLab';
 import { ScamChecker } from './components/ScamChecker';
+import { CyberAiChat } from './components/CyberAiChat';
 import { QuizCard } from './components/QuizCard';
 import { ProjectShowcase } from './components/ProjectShowcase';
 import { ReportingHub } from './components/ReportingHub';
@@ -380,6 +381,24 @@ export default function App() {
             </p>
           </div>
           <ScamChecker lang={lang} />
+        </section>
+
+        <div className="circuit-divider" aria-hidden="true" />
+
+        {/* 5B. CYBER AI — MULTI-TURN GEMINI DEFENSE ASSISTANT */}
+        <section id="cyber-ai" aria-labelledby="cyber-ai-heading" className="space-y-6">
+          <div className="max-w-3xl">
+            <h2
+              id="cyber-ai-heading"
+              className="font-display text-2xl font-bold text-white sm:text-3xl"
+            >
+              Cyber AI — Interactive Security & Scam Advisor
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              Chat with Cyber AI across multiple turns to dissect suspicious messages, walk through emergency account recovery, or verify student opportunities. Switch specialist roles and Gemini model tiers anytime.
+            </p>
+          </div>
+          <CyberAiChat />
         </section>
 
         <div className="circuit-divider" aria-hidden="true" />

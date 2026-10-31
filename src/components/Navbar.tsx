@@ -37,6 +37,12 @@ export const Navbar: React.FC<NavbarProps> = ({ lang }) => {
             {t.checker}
           </a>
           <a
+            href="#cyber-ai"
+            className="text-cyan-300 hover:text-cyan-200 hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 font-semibold"
+          >
+            Cyber AI
+          </a>
+          <a
             href="#opportunity-bridge"
             className="hover:text-amber-300 hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
           >

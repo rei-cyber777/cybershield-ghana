@@ -31,6 +31,7 @@ function vercelApiDevPlugin(env: Record<string, string>): Plugin {
           '/api/unsubscribe': '/api/unsubscribe.ts',
           '/api/news': '/api/news.ts',
           '/api/send-digest': '/api/send-digest.ts',
+          '/api/cyber-ai': '/api/cyber-ai.ts',
         };
 
         const modulePath = routeMap[pathname];

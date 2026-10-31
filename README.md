@@ -33,6 +33,7 @@
 - **Threat Education Hub (`ScamCard`)**: Deep-dive guides on **Investment Scams**, **Mobile Money (MoMo) Fraud**, **Fake Jobs & Scholarships**, and **Phishing** with clearly labeled illustrative examples.
 - **Interactive "Spot the Scam" WhatsApp Lab (`SpotTheScamLab`)**: Tap suspicious phrases inside illustrative WhatsApp and SMS messages to uncover red flags and earn a detection score.
 - **"Is This a Scam?" Rule-Based Checker (`ScamChecker`)**: Client-side heuristic risk engine (`src/lib/scamCheckerEngine.ts`) that scores suspicious checklists and pasted message text locally.
+- **Cyber AI Multi-Turn Defense Assistant (`CyberAiChat` + `/api/cyber-ai`)**: Multi-turn Gemini chat interface supporting specialist roles (Scam & MoMo Fraud Analyst, Emergency Incident Coach, Student & Job Opportunity Verifier) and model tiers (`gemini-3.1-flash-lite`, `gemini-3.8-flash`, and `gemini-4-argon`).
 - **Cyber Readiness Quiz (`QuizCard`)**: Instant-feedback multiple-choice quiz with one-click WhatsApp shareable result cards.
 - **Featured Project — Opportunity Bridge (`ProjectShowcase`)**: Connecting 1,000+ students with vetted scholarships and safe digital practices ([Join on WhatsApp](https://chat.whatsapp.com/IP8WRS5WGXC39ZlgSCH4f5)).
 - **Ghana Reporting Directory & Anonymous Scam Report Form (`ReportingHub`)**: Searchable directory with official links to Ghanaian authorities (`csa.gov.gh`, `police.gov.gh`, `bog.gov.gh`, `sec.gov.gh`) + anonymous reporting (`public.scam_reports`) with phone-number redaction, honeypot spam protection, and rate limiting.
